@@ -18,10 +18,15 @@ function _init()
   yvel=0,
   
   w=pixel*8,
-  h=pixel*8
+  h=pixel*8,
+  
+  colstate="air"
  }
  
  updatehitboxes()
+ 
+ resetswing()
+
  
  bg=3
  
@@ -29,6 +34,20 @@ function _init()
  
 end
 
+function resetswing()
+ swing={
+  xvec=0,
+  yvec=-1,
+  
+  --consts
+  lowf=0.2,
+  highf=1.5,
+  btnf=0.025,
+  decay=0.002
+ }
+ 
+ swing.force=swing.lowf
+end
 
 function _update60()
  currentupdate()
@@ -36,18 +55,100 @@ end
 
 function updateplaying()
 
+ -- collisions
  updatehitboxes()
  
  if mapcol(av.bottom,0,av.yvel,0) then
   moveavtoground()
   av.xvel=0
   av.yvel=0
+  av.colstate="ground"
  else
   av.yvel+=0.01
+  
+  av.colstate="air"
  end
  
+ 
+ if mapcol(av.top,0,av.yvel,0) then
+  bg=8
+  moveavtoroof()
+  av.yvel*=-1
+ end
+ 
+ if mapcol(av.left,av.xvel,0,0) then
+  bg=7
+  moveavtoleft()
+  av.xvel*=-1
+ end
+ 
+ if mapcol(av.right,av.xvel,0,0) then
+  bg=6
+  moveavtoright()
+  av.xvel*=-1
+ end
+ 
+ -- av update
+ av.x=av.x+av.xvel
  av.y=av.y+av.yvel
 
+ -- swing controls
+ if btnp(⬅️) then
+  swing.xvec-=0.5
+  
+  if swing.xvec<-1 then
+   swing.xvec=-1
+  end
+ end
+
+ if btnp(➡️) then
+  swing.xvec+=0.5
+  
+  if swing.xvec<1 then
+   swing.xec=1
+  end
+ end
+
+ if btnp(❎) then
+  swing.force+=swing.btnf
+  
+  if swing.force>swing.highf then
+   swing.force=swing.highf
+  end
+ end
+ 
+ if swing.force>swing.lowf then
+  swing.force-=0.005
+ end
+ 
+ if swing.force<swing.lowf then
+  swing.force=swing.lowf
+ end
+ 
+ if btnp(🅾️) and av.colstate=="ground" then
+  av.xvel=swing.xvec*swing.force
+  av.yvel=swing.yvec*swing.force
+  
+  resetswing()
+ end
+ 
+end
+
+function _draw()
+ cls(bg)
+ 
+ --todo: make map move
+ xmap=0
+ ymap=0
+ 
+ map(xmap*16,ymap*16,xmap*128,ymap*128,16,16)
+ 
+ spr(2,av.x*8,av.y*8)
+ 
+ line(av.x*8,av.y*8,
+  av.x*8+(swing.xvec*8*swing.force),
+  av.y*8+(swing.yvec*8*swing.force),
+  9)
 end
 -->8
 --collision
@@ -176,19 +277,6 @@ function checkflag(x,y,flag)
  return fget(s,flag)
 end
 
--->8
-
-function _draw()
- cls(bg)
- 
- --todo: make map move
- xmap=0
- ymap=0
- 
- map(xmap*16,ymap*16,xmap*128,ymap*128,16,16)
- 
- spr(2,av.x*8,av.y*8)
-end
 __gfx__
 00000000888888880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000008bbbbbb80055550000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
