@@ -1,0 +1,6 @@
+02/03
+
+fiddling with gravity, need to make ball weighty with making x and y movement feel natural
+
+Immediate drop off of force, or increasing drop off over time?
+Other ways to play with force management?
