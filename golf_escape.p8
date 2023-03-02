@@ -17,10 +17,10 @@ function _init()
   xvel=0,
   yvel=0,
   
+  colstate="air",
+  
   w=pixel*8,
   h=pixel*8,
-  
-  colstate="air"
  }
  
  updatehitboxes()
@@ -42,8 +42,9 @@ function resetswing()
   --consts
   lowf=0.2,
   highf=1.5,
-  btnf=0.025,
-  decay=0.002
+  rotangle=1/24,
+  btnf=0.25,
+  decay=0.002,
  }
  
  swing.force=swing.lowf
@@ -94,19 +95,11 @@ function updateplaying()
 
  -- swing controls
  if btnp(⬅️) then
-  swing.xvec-=0.5
-  
-  if swing.xvec<-1 then
-   swing.xvec=-1
-  end
+  swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,swing.rotangle)
  end
 
  if btnp(➡️) then
-  swing.xvec+=0.5
-  
-  if swing.xvec<1 then
-   swing.xec=1
-  end
+  swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,-swing.rotangle)
  end
 
  if btnp(❎) then
@@ -118,7 +111,7 @@ function updateplaying()
  end
  
  if swing.force>swing.lowf then
-  swing.force-=0.005
+  swing.force-=swing.decay
  end
  
  if swing.force<swing.lowf then
@@ -132,6 +125,13 @@ function updateplaying()
   resetswing()
  end
  
+end
+
+function rotatevec(x,y,angle)
+ local newx=x*cos(angle)-y*sin(angle)
+ local newy=x*sin(angle)+y*cos(angle)
+ 
+ return newx,newy
 end
 
 function _draw()
@@ -149,6 +149,11 @@ function _draw()
   av.x*8+(swing.xvec*8*swing.force),
   av.y*8+(swing.yvec*8*swing.force),
   9)
+  
+  
+ print(swing.xvec,1,0,0)
+ print(swing.yvec,1,7,0)
+ 
 end
 -->8
 --collision
