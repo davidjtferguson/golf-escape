@@ -4,3 +4,6 @@ fiddling with gravity, need to make ball weighty with making x and y movement fe
 
 Immediate drop off of force, or increasing drop off over time?
 Other ways to play with force management?
+
+play test using -> for clockwise and <- for anticlockwise
+- will it become confusing when line is pointing down?
