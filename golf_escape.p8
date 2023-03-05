@@ -130,13 +130,14 @@ function updateplaying()
   swing.force=swing.lowf
  end
  
+ updateaim()
+ 
  if btnp(🅾️) and av.colstate=="ground" then
   applyswing(av)
 
   resetswing()
  end
  
- updateaim()
 end
 
 function rotatevec(x,y,angle)
@@ -236,17 +237,12 @@ function _draw()
   linecol=10
  end
  
- line(av.x*8,av.y*8,
-  av.x*8+(swing.xvec*8*swing.force*3),
-  av.y*8+(swing.yvec*8*swing.force*3),
-  linecol)
-
  --todo:offset for av center
  --todo:consider look. lines?
  for point in all(aim.points) do
   pset(
    (av.w/2+point.x)*8,
-   (av.h/2+point.y)*8,0)
+   (av.h/2+point.y)*8,linecol)
  end
 
  print(#aim.points,1,0,0)
