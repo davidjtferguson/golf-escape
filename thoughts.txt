@@ -9,14 +9,11 @@ play test using -> for clockwise and <- for anticlockwise
 - will it become confusing when line is pointing down?
 
 next todo:
-- different tiles
--> convayer belts (left and right - copy from dance jab?)
-
-other todo:
 - death/reset
 -> checkpoint system
 -> spikes/kill tiles
 
+other todo:
 - different ground tiles
 -> bunker (current stop)
 -> bounce to a stop
