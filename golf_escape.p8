@@ -187,8 +187,8 @@ function updateaim()
   y=av.y,
   xvel=av.xvel,
   yvel=av.yvel,
-  h=1,
-  w=1,
+  h=pixel*8,
+  w=pixel*8,
   points={},
  }
 
@@ -253,10 +253,7 @@ end
 
 function updatehitboxes()
  --smaller than av
- av.hurtbox=makebox(av,1,2,5,3)
- 
- local off=coloffset*9
- 
+
  --cover top and bottom
  av.bottom=makebox(
   av,
