@@ -186,13 +186,9 @@ function updateaim()
   y=av.y,
   xvel=av.xvel,
   yvel=av.yvel,
+  h=1,
+  w=1,
   points={},
-  --todo:consider size/shape
-  --should cover whole av
-  hitbox=makebox(
-   1,1,
-   2,2,
-   0,coloffset)
  }
 
  if av.colstate=="ground" then
@@ -212,7 +208,14 @@ function updateaim()
 	  
 	  aim.yvel+=gravity
 	  
-	  --todo:fix, not working
+	  --todo:consider size/shape
+	  --should cover whole av
+	  aim.hitbox=makebox(
+	   aim,
+	   2,2,
+	   4,4,
+	   0,coloffset)
+   
 	  if mapcol(aim.hitbox,0,aim.yvel,0) then
 	   wallhit=true
 	  end
@@ -241,9 +244,11 @@ function _draw()
  --todo:offset for av center
  --todo:consider look. lines?
  for point in all(aim.points) do
-  pset(point.x*8,point.y*8,0)
+  pset(
+   (av.w/2+point.x)*8,
+   (av.h/2+point.y)*8,0)
  end
-  
+
  print(#aim.points,1,0,0)
  
 end
@@ -252,36 +257,39 @@ end
 
 function updatehitboxes()
  --smaller than av
- av.hurtbox=makebox(1,2,5,3)
+ av.hurtbox=makebox(av,1,2,5,3)
  
  local off=coloffset*9
  
  --cover top and bottom
  av.bottom=makebox(
+  av,
   1,7,
   6,1,
   0,coloffset)
  
  av.top=makebox(
+  av,
   1,1,
   6,1,
   0,coloffset)
  
  --space between top and bottom
  av.left=makebox(
+  av,
   1,2,
   1,5,
   coloffset)
  
- av.right=makebox(6,2,1,5)
+ av.right=makebox(av,6,2,1,5)
 end
 
-function makebox(x,y,w,h,xo,wo)
+function makebox(obj,x,y,w,h,xo,wo)
  return {
- 	x=av.x+av.w*pixel*x-(xo or 0),
- 	y=av.y+av.h*pixel*y,
- 	w=av.w*pixel*w-(wo or 0),
- 	h=av.h*pixel*h
+ 	x=obj.x+obj.w*pixel*x-(xo or 0),
+ 	y=obj.y+obj.h*pixel*y,
+ 	w=obj.w*pixel*w-(wo or 0),
+ 	h=obj.h*pixel*h
  }
 end
 
@@ -334,7 +342,7 @@ function distanceinwall(box,checkx,checky,direction)
 end
 
 --all sides collision(flag)
-function allboxcol(f)
+--[[function allboxcol(f)
  if mapcol(av.top,0,0,f) and
     mapcol(av.bottom,0,0,f) and
     mapcol(av.left,0,0,f) and
@@ -353,6 +361,7 @@ function anyboxcol(xvel,yvel,flag)
  end
  return false
 end
+]]--
 
 --mapcollision
 function mapcol(box,xvel,yvel,flag)
