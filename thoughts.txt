@@ -7,3 +7,27 @@ Other ways to play with force management?
 
 play test using -> for clockwise and <- for anticlockwise
 - will it become confusing when line is pointing down?
+
+next todo:
+- different tiles
+-> convayer belts (left and right - copy from dance jab?)
+
+other todo:
+- death/reset
+-> checkpoint system
+-> spikes/kill tiles
+
+- different ground tiles
+-> bunker (current stop)
+-> bounce to a stop
+
+- decide on AV size. Should be a lot smaller, and should be round
+
+- refine prediction path
+-> seems to be off height wise
+-> needs to hit edges exactly where the AV would (should be based on AV size so we can change sizes easily)
+-> decide how it should look
+
+- rotate AV while moving through air
+
+- visual change on AV while aiming and charging aim
