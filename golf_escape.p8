@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
-
+-- golf escape
 
 function _init()
  --constants
@@ -35,6 +35,10 @@ function _init()
  bg=3
  
  currentupdate=updateplaying
+ 
+ aim={
+  points={}
+ }
  
 end
 
@@ -93,10 +97,8 @@ function updateplaying()
   av.xvel*=-1
  end
  
- -- av update
- av.x=av.x+av.xvel
- av.y=av.y+av.yvel
-
+ updatemovement(av)
+ 
  -- swing controls
  if btnp(⬅️) then
   swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,swing.rotangle)
@@ -129,12 +131,12 @@ function updateplaying()
  end
  
  if btnp(🅾️) and av.colstate=="ground" then
-  av.xvel=swing.xvec*swing.force
-  av.yvel=swing.yvec*swing.force
-  
+  applyswing(av)
+
   resetswing()
  end
  
+ updateaim()
 end
 
 function rotatevec(x,y,angle)
@@ -143,7 +145,6 @@ function rotatevec(x,y,angle)
  
  return newx,newy
 end
-
 
 function updatecamera()
  --screen by screen
@@ -168,6 +169,56 @@ function updatecamera()
  camera(xmap*128,ymap*128) 
 end
 
+function updatemovement(obj)
+ obj.x=obj.x+obj.xvel
+ obj.y=obj.y+obj.yvel
+end
+
+function applyswing(obj)
+	obj.xvel=swing.xvec*swing.force
+	obj.yvel=swing.yvec*swing.force
+end
+
+function updateaim()
+ -- reset
+ aim={
+  x=av.x,
+  y=av.y,
+  xvel=av.xvel,
+  yvel=av.yvel,
+  points={},
+  --todo:consider size/shape
+  --should cover whole av
+  hitbox=makebox(
+   1,1,
+   2,2,
+   0,coloffset)
+ }
+
+ if av.colstate=="ground" then
+	 local wallhit=false
+	 
+  applyswing(aim)
+
+	 while wallhit==false do
+		 local point={
+		  x=aim.x,
+		  y=aim.y,
+		 }
+		 
+		 add(aim.points,point)
+	 
+	  updatemovement(aim)
+	  
+	  aim.yvel+=gravity
+	  
+	  --todo:fix, not working
+	  if mapcol(aim.hitbox,0,aim.yvel,0) then
+	   wallhit=true
+	  end
+	 end
+ end
+end
 
 function _draw()
  cls(bg)
@@ -186,10 +237,14 @@ function _draw()
   av.x*8+(swing.xvec*8*swing.force*3),
   av.y*8+(swing.yvec*8*swing.force*3),
   linecol)
+
+ --todo:offset for av center
+ --todo:consider look. lines?
+ for point in all(aim.points) do
+  pset(point.x*8,point.y*8,0)
+ end
   
-  
- print(swing.currdecaypause,1,0,0)
- print(ymap,1,7,0)
+ print(#aim.points,1,0,0)
  
 end
 -->8
@@ -229,7 +284,6 @@ function makebox(x,y,w,h,xo,wo)
  	h=av.h*pixel*h
  }
 end
-
 
 function moveavtoground()
  av.y+=av.yvel
@@ -299,7 +353,6 @@ function anyboxcol(xvel,yvel,flag)
  end
  return false
 end
-
 
 --mapcollision
 function mapcol(box,xvel,yvel,flag)
