@@ -24,6 +24,8 @@ function _init()
   
   colstate="air",
   
+  --todo:remove, just have colbox
+  --or just have this
   w=pixel*8,
   h=pixel*8,
  }
@@ -73,14 +75,13 @@ function updateplaying()
  -- collisions
  updatehitboxes()
  
- if mapcol(av.bottom,0,av.yvel,0) then
-  
+ if groundcol(av.colbox,0,av.yvel,0) then
   --tredmills
-  if mapcol(av.bottom,0,av.yvel,1) then
+  if groundcol(av.colbox,0,av.yvel,1) then
    av.x+=treadmillspeed
   end
 
-  if mapcol(av.bottom,0,av.yvel,2) then
+  if groundcol(av.colbox,0,av.yvel,2) then
    av.x-=treadmillspeed
   end
 
@@ -94,22 +95,21 @@ function updateplaying()
   av.colstate="air"
  end
  
- if mapcol(av.top,0,av.yvel,0) then
+ if topcol(av.colbox,0,av.yvel,0) then
   moveavtoroof()
   av.yvel*=-1
  end
  
- if mapcol(av.left,av.xvel,0,0) then
-  moveavtoleft()
+ if leftcol(av.colbox,av.xvel,0,0) then
+  --todo:fix
+  --moveavtoleft()
   av.xvel*=-1
  end
  
- if mapcol(av.right,av.xvel,0,0) then
+ if rightcol(av.colbox,av.xvel,0,0) then
   moveavtoright()
   av.xvel*=-1
  end
- 
- updatemovement(av)
  
  -- swing controls
  if btnp(⬅️) then
@@ -149,6 +149,8 @@ function updateplaying()
 
   resetswing()
  end
+ 
+ updatemovement(av)
  
 end
 
@@ -199,14 +201,14 @@ function updateaim()
   y=av.y,
   xvel=av.xvel,
   yvel=av.yvel,
-  h=pixel*8,
-  w=pixel*8,
+  h=av.colbox.h,
+  w=av.colbox.w,
   points={},
  }
 
  if av.colstate=="ground" then
 	 local wallhit=false
-	 
+
   applyswing(aim)
 
 	 while wallhit==false do
@@ -222,14 +224,12 @@ function updateaim()
 	  aim.yvel+=gravity
 	  
 	  --todo:consider size/shape
-	  --should cover whole av
-	  aim.hitbox=makebox(
-	   aim,
-	   2,2,
-	   4,4,
-	   0,coloffset)
+	  --should cover whole av	
+	  aim.colbox=makebox(aim,
+	   aim.x,aim.y,aim.h,aim.w)
    
-	  if mapcol(aim.hitbox,0,aim.yvel,0) then
+	  if topcol(aim.colbox,0,aim.yvel,0)
+	     or #aim.points>100 then
 	   wallhit=true
 	  end
 	 end
@@ -243,6 +243,10 @@ function _draw()
  
  spr(2,av.x*8,av.y*8)
  
+ 
+ rect(av.colbox.x*8,av.colbox.y*8,
+  (av.colbox.x+av.colbox.w)*8,(av.colbox.y+av.colbox.h)*8)
+ 
  linecol=9
  
  if swing.currdecaypause>0 then
@@ -253,8 +257,8 @@ function _draw()
  --todo:consider look. lines?
  for point in all(aim.points) do
   pset(
-   (av.w/2+point.x)*8,
-   (av.h/2+point.y)*8,linecol)
+   (av.colbox.w/2+point.x)*8,
+   (av.colbox.h/2+point.y)*8,linecol)
  end
 
  print(#aim.points,1,0,0)
@@ -264,29 +268,7 @@ end
 --collision
 
 function updatehitboxes()
- --smaller than av
-
- --cover top and bottom
- av.bottom=makebox(
-  av,
-  1,7,
-  6,1,
-  0,coloffset)
- 
- av.top=makebox(
-  av,
-  1,1,
-  6,1,
-  0,coloffset)
- 
- --space between top and bottom
- av.left=makebox(
-  av,
-  1,2,
-  1,5,
-  coloffset)
- 
- av.right=makebox(av,6,2,1,5)
+ av.colbox=makebox(av,0,0,3,3)
 end
 
 function makebox(obj,x,y,w,h,xo,wo)
@@ -302,25 +284,25 @@ function moveavtoground()
  av.y+=av.yvel
  av.y-=av.y%pixel
  updatehitboxes()
- av.y+=distanceinwall(av.bottom,0,1,-1)+pixel
+ av.y+=distanceinwall(av.colbox,0,1,-1)+pixel
  updatehitboxes()
 end
 
 function moveavtoroof()
- av.y+=distancetowall(av.top,0,1,-1)
+ av.y+=distancetowall(av.colbox,0,1,-1)
  av.y+=pixel-av.y%pixel
 end
 
 function moveavtoleft()
  --unsure why offset needed :(
- av.left.x+=coloffset 
- av.x+=distancetowall(av.left,1,0,-1)
- av.left.x-=coloffset
- av.x+=pixel-av.x%pixel
+ --av.colbox.x+=coloffset 
+ av.x+=distancetowall(av.colbox,1,0,-1)
+ --av.colbox.x-=coloffset
+ --av.x+=pixel-av.x%pixel
 end
 
 function moveavtoright()
- av.x+=distancetowall(av.right,1,0,1)
+ av.x+=distancetowall(av.colbox,1,0,1)
  av.x-=av.x%pixel
 end
 
@@ -346,31 +328,53 @@ function distanceinwall(box,checkx,checky,direction)
  return distanceinwall
 end
 
---all sides collision(flag)
---[[function allboxcol(f)
- if mapcol(av.top,0,0,f) and
-    mapcol(av.bottom,0,0,f) and
-    mapcol(av.left,0,0,f) and
-    mapcol(av.right,0,0,f) then
-  return true
- end
- return false
-end
-
-function anyboxcol(xvel,yvel,flag)
- if mapcol(av.top,xvel,yvel,flag) or
-    mapcol(av.bottom,xvel,yvel,flag) or
-    mapcol(av.left,xvel,yvel,flag) or
-    mapcol(av.right,xvel,yvel,flag) then
-  return true
- end
- return false
-end
-]]--
-
 --mapcollision
 function mapcol(box,xvel,yvel,flag)
  return checkflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
+end
+
+function groundcol(box,xvel,yvel,flag)
+ local x = box.x+xvel
+ local y = box.y+yvel
+ local w = box.w
+ local h = box.h
+
+ return
+  checkflag(x,y+h,flag) or
+  checkflag(x+w,y+h,flag)
+end
+
+function leftcol(box,xvel,yvel,flag)
+ local x = box.x+xvel
+ local y = box.y+yvel
+ local w = box.w
+ local h = box.h
+
+ return
+  checkflag(x,y,flag) or
+  checkflag(x,y+h,flag)
+end
+
+function rightcol(box,xvel,yvel,flag)
+ local x = box.x+xvel
+ local y = box.y+yvel
+ local w = box.w
+ local h = box.h
+
+ return
+  checkflag(x,y,flag) or
+  checkflag(x+w,y,flag)
+end
+
+function topcol(box,xvel,yvel,flag)
+ local x = box.x+xvel
+ local y = box.y+yvel
+ local w = box.w
+ local h = box.h
+
+ return
+  checkflag(x,y,flag) or
+  checkflag(x,y+w,flag)
 end
 
 function checkflagarea(x,y,w,h,flag)
@@ -430,7 +434,7 @@ __map__
 0100000000000000000000000000000101000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0100000000000000000000000000000101000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0100000000000000000000000000000101000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0101030303030303030303030303010101010101010101010101010101010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0101010101010101010101010101010101010101010101010101010101010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0101010100000001000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0001000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0001000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
