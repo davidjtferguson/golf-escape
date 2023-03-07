@@ -9,6 +9,14 @@ play test using -> for clockwise and <- for anticlockwise
 - will it become confusing when line is pointing down?
 
 next todo:
+- collision re-write tweaks
+-> can trigger different side collisions. Need another mechanic against this:
+->> fake bigger box to verify which side is coliding
+->> do an 'all collision' first and do something special for that
+-> test predict - think it's working but test
+-> move out of wall functions need to check any collision, not all collision.
+->> re-instate for left side. fix for all sides :)
+
 - death/reset
 -> checkpoint system
 -> spikes/kill tiles
