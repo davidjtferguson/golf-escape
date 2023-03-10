@@ -11,7 +11,7 @@ play test using -> for clockwise and <- for anticlockwise
 next todo:
 - collision re-write tweaks
 -> issue where being on the ground triggers left and right side collision
-->> patched by only checking top when in air, but that's not satisfying since it means treadmills can't go against walls.
+->> patched by only checking top, l and r when in air, but that's not satisfying since it means treadmills can't go against walls.
 ->> find more robust solution.
 -> issues when colliding with an edge at high speeds.
 -> reduce speed to prevent escaping. speed scale will probably end up way smaller.
@@ -19,8 +19,8 @@ next todo:
 
 - hooks tweaks
 -> allign visual and hitcircles
--> tweak hitcircles size to be natural feeling
--> smooth transition when hitting hook
+-> tweak hitcircles size to be natural feeling. Probably quite small.
+-> smooth transition when hitting hook... probably needs sfx/puff effect.
 
 - death/reset
 -> checkpoint system
