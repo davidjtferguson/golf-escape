@@ -11,8 +11,16 @@ play test using -> for clockwise and <- for anticlockwise
 next todo:
 - collision re-write tweaks
 -> issue where being on the ground triggers left and right side collision
--> patched by only checking left and right when in air, but that's not satisfying since it means treadmills can't go against walls.
--> find more robust solution.
+->> patched by only checking top when in air, but that's not satisfying since it means treadmills can't go against walls.
+->> find more robust solution.
+-> issues when colliding with an edge at high speeds.
+-> reduce speed to prevent escaping. speed scale will probably end up way smaller.
+-> convayer belt should interface with xvel, not x directly
+
+- hooks tweaks
+-> allign visual and hitcircles
+-> tweak hitcircles size to be natural feeling
+-> smooth transition when hitting hook
 
 - death/reset
 -> checkpoint system
@@ -22,6 +30,12 @@ other todo:
 - different ground tiles
 -> bunker (current stop)
 -> bounce to a stop
+
+- hooks
+-> consider visuals
+->> helecopter blade?
+->> bob up and down to show flying?
+-> flying hooks that move after attaching to them
 
 - decide on AV size. Should be a lot smaller, and should be round
 
