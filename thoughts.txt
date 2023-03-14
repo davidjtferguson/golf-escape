@@ -16,6 +16,8 @@ next todo:
 -> issues when colliding with an edge at high speeds.
 -> reduce speed to prevent escaping. speed scale will probably end up way smaller.
 -> convayer belt should interface with xvel, not x directly
+-> investigate raycasting?
+-> If distance moved in one frame will be larger than 1 tile, check half way point, repeat till every tile is checked?
 
 - hooks tweaks
 -> allign visual and hitcircles
@@ -47,3 +49,10 @@ other todo:
 - rotate AV while moving through air
 
 - visual change on AV while aiming and charging aim
+
+Rory ideas
+
+- slow down zones
+- circle catchers
+- have pars
+- scores
