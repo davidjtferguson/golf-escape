@@ -56,3 +56,5 @@ Rory ideas
 - circle catchers
 - have pars
 - scores
+- enemies that can you kill, but will hit you away. they walk slowly, just back and forth like stupid OG mario bros NPC. giving time limit and danger to players in a different way. if they throw/hit you away at random trajectory, sometimes they could be good?
+-
