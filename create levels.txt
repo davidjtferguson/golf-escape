@@ -1,0 +1,24 @@
+To make a level
+
+a level must have an enterance (s19) and an exit (s20 or s21)
+a level can optionally have a key (s22)
+
+draw a level on the map with these elements
+
+then in code go to tab --init bits and find the function initlevels()
+
+you will see a list of levels that looks like this:
+
+ lvls={
+  {xmap=0,ymap=1,w=2,h=1},
+  {xmap=1,ymap=2,w=1,h=1},
+ }
+
+ To add a level, add an object to this table.
+ set xmap and ymap to your starting screen. This is in terms of full screens on the map, with the top left screen being 0,0
+ set the height and width in terms of screens. e.g. in the first example the level is two screens wide and one screen high.
+ (currently this is all counted in full screens which is easier, though we could discuss levels being not counted in full screens if there was a reason worth doing it for)
+
+ your level with then appear in the order listed. so if you're playing with a level, put it first on the list.
+
+ the ball will appear at the enterance you placed, and getting to the exit (with the key if there is one) will move you on to the next level in the list
