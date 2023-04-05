@@ -70,23 +70,14 @@ function updateplaying()
 
  -- swing controls
  if av.canswing then
+  --rotate angle
   if btn(⬅️) then
-   swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,swing.rotangle)
-  end
-
-  if btn(➡️) then
-   swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,-swing.rotangle)
-  end
-
-  --prob delete
-  -- anything better
-  -- to do with up and down?
-  if btnp(⬇️) then
-   swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,swing.brotangle)
-  end
-
-  if btnp(⬆️) then
-   swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,-swing.brotangle)
+   rotacc(1)
+  elseif btn(➡️) then
+   rotacc(-1)
+  else
+   --reset vel
+   swing.currrotangle=swing.lowrotangle
   end
 
   --power swing
@@ -636,9 +627,10 @@ function resetswing()
   --consts
   lowf=0.2,
   highf=0.45,
-  rotangle=1/300,
-  brotangle=1/48,
   btnf=0.04,
+  lowrotangle=1/1200,
+  highrotangle=1/300,
+  rotanglevel=1/3600,
   basedecay=0.0002,
   decayvel=0.00005,
   decaypause=7,
@@ -651,6 +643,7 @@ function resetswing()
  }
  
  swing.force=swing.lowf
+ swing.currrotangle=swing.lowrotangle
 end
 
 function createhook(x,y)
@@ -730,6 +723,7 @@ function initlevels()
  --should x and y find the
  -- find the enterance 
  lvls={
+  {xmap=2,ymap=3,w=1,h=1},
   --{xmap=0,ymap=1,w=2,h=1},
   --{xmap=1,ymap=2,w=1,h=1},
   {xmap=5,ymap=3,w=1,h=1},
@@ -831,6 +825,16 @@ function updatebackgrounds()
   bg.y+=16
  end
  
+end
+
+function rotacc(fact)
+ swing.xvec,swing.yvec=rotatevec(swing.xvec,swing.yvec,swing.currrotangle*fact)
+
+ swing.currrotangle+=swing.rotanglevel
+ 
+ if swing.currrotangle>swing.highrotangle then
+  swing.currrotangle=swing.highrotangle
+ end
 end
 
 function rotatevec(x,y,angle)
