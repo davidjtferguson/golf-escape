@@ -1054,11 +1054,12 @@ end
 -- animation and special draws
 
 function avanimfind(t)
- --default to ball
+ --default
  t.basesprite=13
  t.sprites=1
  t.speed=20
 
+ --idle animation
  if av.framesidle>300 then
   t.basesprite=11
   t.sprites=2
