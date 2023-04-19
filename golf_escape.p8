@@ -907,137 +907,81 @@ function updateav()
 end
 
 function updatecamera()
- --todo:re-write for smooth
- -- camera, as ticketed
+ -- don't allow camera off map
+ if av.x>0 and av.x<127 then
+  xcamera=camera1d(xcamera,currlvl.xmap,currlvl.w,av.x,av.w,swing.xvec)
+ end
  
+ if av.y>0 and av.y<63 then
+  ycamera=camera1d(ycamera,currlvl.ymap,currlvl.h,av.y,av.h,swing.yvec)
+ end
+
+ camera(xcamera*128,ycamera*128) 
+end
+
+function camera1d(camera,lvlpos,lvllength,avpos,avlength,swingvec)
  local lowbound=3
  local highbound=12
  local scrollfrac=0.25
  local maxscrollspeed=0.1
- 
- --screen by screen
- -- don't allow camera off map
- if av.x>0 and av.x<127 then
 
-  if currlvl.w==1 then
-   xcamera=flr((av.x+av.w*0.5)/16)
-  else
-   --scrolling camera
-   local tiledestination=8
-   
-		 if av.canswing then
-				if swing.xvec<0 then
-				 tiledestination=highbound
-				else
-				 tiledestination=lowbound
-				end
-		  
-    local cameradest=(av.x-tiledestination)/16
-    
-    --smooth scroll to level bounds
-    if cameradest<currlvl.xmap then
-     cameradest=currlvl.xmap
-    end
-   
-    if cameradest>currlvl.xmap+currlvl.w-1 then
-     cameradest=currlvl.xmap+currlvl.w-1
-    end
+	if lvllength==1 then
+		camera=flr((avpos+avlength*0.5)/16)
+	else
+		--scrolling camera
+		local tiledestination=8
+		
+		if av.canswing then
+			if swingvec<0 then
+				tiledestination=highbound
+			else
+				tiledestination=lowbound
+			end
+			
+			local cameradest=(avpos-tiledestination)/16
+			
+			--smooth scroll to level bounds
+			if cameradest<lvlpos then
+				cameradest=lvlpos
+			end
+		
+			if cameradest>lvlpos+lvllength-1 then
+				cameradest=lvlpos+lvllength-1
+			end
 
-    local cameradiff=cameradest-xcamera
-    
-    cameradiff*=scrollfrac
-    
-    if cameradiff>maxscrollspeed then
-     cameradiff=maxscrollspeed
-    elseif cameradiff<-maxscrollspeed then
-     cameradiff=-maxscrollspeed
-    end
-    
-    xcamera+=cameradiff
-		 else
-		  --camera only moves if
-    -- player gets past deadzone
-		  if av.x/16<xcamera+(lowbound/16) then
-		   xcamera=(av.x-lowbound)/16   
-		  end
+			local cameradiff=cameradest-camera
+			
+			cameradiff*=scrollfrac
+			
+			if cameradiff>maxscrollspeed then
+				cameradiff=maxscrollspeed
+			elseif cameradiff<-maxscrollspeed then
+				cameradiff=-maxscrollspeed
+			end
+			
+			camera+=cameradiff
+		else
+			--camera only moves if
+			-- player gets past deadzone
+			if avpos/16<camera+(lowbound/16) then
+				camera=(avpos-lowbound)/16   
+			end
 
-		  if av.x/16>xcamera+(highbound/16) then
-     xcamera=(av.x-highbound)/16
-		  end
-		 end
-   
-   --don't scroll off level
-   if xcamera<currlvl.xmap then
-    xcamera=currlvl.xmap
-   end
-   
-   if xcamera>currlvl.xmap+currlvl.w-1 then
-    xcamera=currlvl.xmap+currlvl.w-1
-   end
-  end
- end
- 
- if av.y>0 and av.y<63 then
-  if currlvl.h==1 then
-   ycamera=flr((av.y+av.h*0.5)/16)
-  else
-		 if av.canswing then
-		  if swing.yvec<0 then
-		   tiledestination=highbound
-		  else
-		   tiledestination=lowbound
-		  end
-		  
-		  local cameradest=(av.y-tiledestination)/16
-
-    --smooth scroll to level bounds
-    if cameradest<currlvl.ymap then
-     cameradest=currlvl.ymap
-    end
-   
-    if cameradest>currlvl.ymap+currlvl.h-1 then
-     cameradest=currlvl.ymap+currlvl.h-1
-    end
-
-    local cameradiff=cameradest-ycamera
-    
-    cameradiff*=scrollfrac
-    
-    if cameradiff>maxscrollspeed then
-     cameradiff=maxscrollspeed
-    elseif cameradiff<-maxscrollspeed then
-     cameradiff=-maxscrollspeed
-    end
-    
-    ycamera+=cameradiff
-		 else
-		  --camera only pushed as
-		  -- pushes at boundries
-		  
-		  -- if av's position on screen
-		  -- is less than the lowest
-		  
-		  if av.y/16<ycamera+(lowbound/16) then
-		   ycamera=(av.y-lowbound)/16   
-		  end
-
-		  if av.y/16>ycamera+(highbound/16) then
-       ycamera=(av.y-highbound)/16
-		  end
-		 end
-   
-   --don't scroll off level
-   if ycamera<currlvl.ymap then
-    ycamera=currlvl.ymap
-   end
-   
-   if ycamera>currlvl.ymap+currlvl.h-1 then
-    ycamera=currlvl.ymap+currlvl.h-1
-   end
-  end
- end
-
- camera(xcamera*128,ycamera*128) 
+			if avpos/16>camera+(highbound/16) then
+				camera=(avpos-highbound)/16
+			end
+		end
+		
+		--don't scroll off level
+		if camera<lvlpos then
+			camera=lvlpos
+		end
+		
+		if camera>lvlpos+lvllength-1 then
+			camera=lvlpos+lvllength-1
+		end
+	end
+	return camera
 end
 
 function updateaim()
