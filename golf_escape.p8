@@ -912,6 +912,8 @@ function updatecamera()
  
  local lowbound=3
  local highbound=12
+ local scrollfrac=0.25
+ local maxscrollspeed=0.1
  
  --screen by screen
  -- don't allow camera off map
@@ -924,43 +926,45 @@ function updatecamera()
    local tiledestination=8
    
 		 if av.canswing then
-		  if swing.xvec<0 then
-		   tiledestination=highbound
-		  else
-		   tiledestination=lowbound
-		  end
+				if swing.xvec<0 then
+				 tiledestination=highbound
+				else
+				 tiledestination=lowbound
+				end
 		  
-      xcamera=(av.x-tiledestination)/16
+    local cameradest=(av.x-tiledestination)/16
+    
+    --smooth scroll to level bounds
+    if cameradest<currlvl.xmap then
+     cameradest=currlvl.xmap
+    end
+   
+    if cameradest>currlvl.xmap+currlvl.w-1 then
+     cameradest=currlvl.xmap+currlvl.w-1
+    end
+
+    local cameradiff=cameradest-xcamera
+    
+    cameradiff*=scrollfrac
+    
+    if cameradiff>maxscrollspeed then
+     cameradiff=maxscrollspeed
+    elseif cameradiff<-maxscrollspeed then
+     cameradiff=-maxscrollspeed
+    end
+    
+    xcamera+=cameradiff
 		 else
 		  --camera only moves if
-      -- player gets past deadzone
+    -- player gets past deadzone
 		  if av.x/16<xcamera+(lowbound/16) then
 		   xcamera=(av.x-lowbound)/16   
 		  end
 
 		  if av.x/16>xcamera+(highbound/16) then
-       xcamera=(av.x-highbound)/16
+     xcamera=(av.x-highbound)/16
 		  end
 		 end
-   
-   --todo:add tweaning to
-   -- move current xcamera
-   -- towards tileoffset value
-   
-   --something like this,
-   -- but don't bounce past
-   -- destination.
-   --[[
-   local xdest=(av.x-tiledestination)/16
-   
-		 local xvec=xcamera-(xdest)
-		 
-		 xcameravel-=xvec*0.01
-		 
-		 xcameravel*=0.9
-		 
-		 xcamera+=xcameravel
-]]
    
    --don't scroll off level
    if xcamera<currlvl.xmap then
@@ -974,7 +978,6 @@ function updatecamera()
  end
  
  if av.y>0 and av.y<63 then
- 
   if currlvl.h==1 then
    ycamera=flr((av.y+av.h*0.5)/16)
   else
@@ -985,7 +988,28 @@ function updatecamera()
 		   tiledestination=lowbound
 		  end
 		  
-      ycamera=(av.y-tiledestination)/16
+		  local cameradest=(av.y-tiledestination)/16
+
+    --smooth scroll to level bounds
+    if cameradest<currlvl.ymap then
+     cameradest=currlvl.ymap
+    end
+   
+    if cameradest>currlvl.ymap+currlvl.h-1 then
+     cameradest=currlvl.ymap+currlvl.h-1
+    end
+
+    local cameradiff=cameradest-ycamera
+    
+    cameradiff*=scrollfrac
+    
+    if cameradiff>maxscrollspeed then
+     cameradiff=maxscrollspeed
+    elseif cameradiff<-maxscrollspeed then
+     cameradiff=-maxscrollspeed
+    end
+    
+    ycamera+=cameradiff
 		 else
 		  --camera only pushed as
 		  -- pushes at boundries
