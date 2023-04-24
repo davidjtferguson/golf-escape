@@ -109,6 +109,8 @@ function updateplaying()
   
   --release swing
   if btnp(🅾️) then
+   sfx(1)
+  
    swingcount+=1
   
    applyswing(av)
@@ -153,6 +155,7 @@ function updateplaying()
  if groundcol(av,0,av.yvel,0) then
   moveavtoground()
   
+  --if vel low enough, land
   if groundcol(av,0,av.yvel,6) or
      abs(av.yvel)<0.075 then
    
@@ -171,10 +174,11 @@ function updateplaying()
 	  if groundcol(av,0,av.yvel,2) then
 	   av.xvel-=treadmillspeed
 	  end
-  else
+  else --bounce
    av.xvel*=xbouncefrac
    av.yvel*=ybouncefrac
 
+   sfx(0)
    av.pauseanim="gsquish"
    av.xpause=squishpause
    av.ypause=squishpause
@@ -195,6 +199,7 @@ function updateplaying()
 	  moveavtoroof()
 	  av.yvel*=-1
 	  
+   sfx(0)
 	  av.pauseanim="tsquish"
 	  av.xpause=squishpause
 	  av.ypause=squishpause
@@ -204,6 +209,7 @@ function updateplaying()
 	  moveavtoleft()
 	  av.xvel*=-1
 	  
+   sfx(0)
 	  av.pauseanim="lsquish"
 	  av.xpause=squishpause
 	  av.ypause=squishpause
@@ -213,6 +219,7 @@ function updateplaying()
 	  moveavtoright()
 	  av.xvel*=-1
 	  
+   sfx(0)
 	  av.pauseanim="rsquish"
 	  av.xpause=squishpause
 	  av.ypause=squishpause
@@ -270,6 +277,7 @@ function updateplaying()
  
  --spikes
  if anycol(av.hurtbox,0,0,4) then
+  sfx(5)
   deathcount+=1
   resetav()
  end
@@ -288,6 +296,7 @@ function updateplaying()
    end
    
 	  --set new cp
+	  sfx(7)
 	  xcp,ycp=xhitblock,yhitblock
 	  mset(xcp,ycp,23)
   end
@@ -319,6 +328,7 @@ function updateplaying()
  if currlvl.haskey and
     circlecollision(av,currlvl.key) then
   --collect key
+  sfx(6)
   currlvl.exit.s=20
   currlvl.key.collected=true
  end
