@@ -1211,6 +1211,12 @@ function avanimfind(t)
   t.basesprite=59
   t.sprites=3
   t.speed=7
+  
+  --slowstate
+  -- air but slower
+  if av.slowstate=="in" then
+   t.speed=14
+  end
  end
 
  --on hook
