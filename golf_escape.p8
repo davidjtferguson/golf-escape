@@ -153,7 +153,7 @@ function updateplaying()
  end
  
  --ground col
- if edgegroundcol() then
+ if groundcol(av,0,av.yvel,0) then
   moveavtoground()
   
   --if vel low enough, land
@@ -200,7 +200,7 @@ function updateplaying()
  end
  
  --other sides col
- if not edgegroundcol() then
+ if not groundcol(av,0,av.yvel,0) then
 	 if topcol(av,0,av.yvel,0) then
 	  moveavtoroof()
 	  av.yvel*=-1
@@ -212,23 +212,23 @@ function updateplaying()
 	 end
  
   if leftcol(av,av.xvel,av.yvel,0) then
-	  moveavtoleft()
-	  av.xvel*=-1
 	  
    sfx(0)
 	  av.pauseanim="lsquish"
 	  av.xpause=squishpause
 	  av.ypause=squishpause
-	 end
-	 
-	 if rightcol(av,av.xvel,av.yvel,0) then
-	  moveavtoright()
+	  
+	  moveavtoleft()
 	  av.xvel*=-1
 	  
+	 elseif rightcol(av,av.xvel,av.yvel,0) then
    sfx(0)
 	  av.pauseanim="rsquish"
 	  av.xpause=squishpause
 	  av.ypause=squishpause
+	  
+	  moveavtoright()
+	  av.xvel*=-1
 	 end
 	else --on ground
 	 if allleftcol(av,av.xvel,0,0) then
@@ -446,20 +446,6 @@ function allcol(box,xvel,yvel,flag)
  return checkallflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
 end
 
-function edgegroundcol()
- --hitting one corner counts as a ground collision
- -- prevents zip on hitting one corner,
- -- but can cause player to stop dead and not bounce
- -- on hitting edge
-
- local ground=groundcol(av,0,av.yvel,0)
-
- local left=bottomleftonlycol(av,av.xvel,av.yvel,0)
- local right=bottomrightonlycol(av,av.xvel,av.yvel,0)
-
- return ground or left or right
-end
-
 function groundcol(box,xvel,yvel,flag)
  local x=box.x+xvel
  local y=box.y+yvel
@@ -471,6 +457,17 @@ function groundcol(box,xvel,yvel,flag)
   checkflag(x+w,y+h,flag)
 end
 
+function allgroundcol(box,xvel,yvel,flag)
+ local x=box.x+xvel
+ local y=box.y+yvel
+ local w=box.w
+ local h=box.h
+
+ return
+  checkflag(x,y+h,flag) and
+  checkflag(x+w,y+h,flag)
+end
+
 function leftcol(box,xvel,yvel,flag)
  local x=box.x+xvel
  local y=box.y+yvel
@@ -479,18 +476,6 @@ function leftcol(box,xvel,yvel,flag)
  return
   checkflag(x,y,flag) or
   checkflag(x,y+h,flag)
-end
-
-function bottomleftonlycol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
-
- return checkflag(x,y+h,flag) and
-  not checkflag(x,y,flag) and
-  not checkflag(x+w,y+h,flag) and
-  not checkflag(x,y+(h-(h/4)),flag)
 end
 
 function allleftcol(box,xvel,yvel,flag)
@@ -512,18 +497,6 @@ function rightcol(box,xvel,yvel,flag)
  return
   checkflag(x+w,y,flag) or
   checkflag(x+w,y+h,flag)
-end
-
-function bottomrightonlycol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
-
- return checkflag(x+w,y+h,flag) and
-  not checkflag(x+w,y,flag) and
-  not checkflag(x,y+h,flag) and
-  not checkflag(x+w,y+(h-(h/4)),flag)
 end
 
 function allrightcol(box,xvel,yvel,flag)
@@ -584,6 +557,28 @@ function distancetowall(box,checkx,checky,direction,colfunc)
 
  while not colfunc(box,distancetowall*checkx,distancetowall*checky,0) do
   distancetowall+=(pixel*direction)
+
+  if allgroundcol(av,distancetowall,av.yvel,0) then
+   --corner collision occured
+   -- abort wall collision
+   -- with ground collision
+   
+   --todo:tidy ground collision
+   -- trigger with function.
+   
+   av.pauseanim="gsquish"
+   av.xpause=squishpause
+   av.ypause=squishpause
+   
+   moveavtoground()
+  
+   av.yvel=0
+   av.xvel=0
+   return distancetowall
+  end
+  
+  --todo:also check
+  -- top collision?
  end
 
  return distancetowall
@@ -1516,9 +1511,9 @@ __gfx__
 10001010500000000000100000100010100000000000102121505010000000101000000000000000000000000000001000000000000000000000000000000000
 10005000005000000050000000005010100032000000000000005000000000101000000000000000000000000000001010000000000000500000000000000010
 10001000100000100000100000100010100000000000105050000000000000101000000000000000000000000000001000000000000000000000000000000000
-10500000005000004200500000000010100000000050000000005000000000101050000000000000000000000000001010000000000000500000000000000010
+10500000005000004200500000000010100000000050000000005000000000101000000000000000000000000000001010000000000000500000000000000010
 10001000100000100042001010001210100000101010101010000000000000101000000000100000000000000000001000000000000000000000000000000000
-10000000005050000000000000820010100000000050000032000000000200101050000000000000000000000000001010000000000000500000100000000010
+10000000005050000000000000820010100000000050000032000000000200101000000000000000000000000000001010000000000000500000100000000010
 10001010000000100000000000000010100000000000001010000000212121101000000000100061000000000000001000000000000000000000000000000000
 10220050005000500000000000005010100000000050000000000000000000101010000000000000000010003100101010000000000000000000100031001010
 10001000000000101010003222000010100000000000001010000000000000101000000000101000000000000000001000000000000000000000000000000000
