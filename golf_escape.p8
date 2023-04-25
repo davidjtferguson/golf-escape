@@ -152,7 +152,8 @@ function updateplaying()
   av.yvel=0
  end
  
- if groundcol(av,0,av.yvel,0) then
+ --ground col
+ if edgegroundcol() then
   moveavtoground()
   
   --if vel low enough, land
@@ -198,7 +199,8 @@ function updateplaying()
   end
  end
  
- if not groundcol(av,0,av.yvel,0) then
+ --other sides col
+ if not edgegroundcol() then
 	 if topcol(av,0,av.yvel,0) then
 	  moveavtoroof()
 	  av.yvel*=-1
@@ -230,12 +232,12 @@ function updateplaying()
 	 end
 	else --on ground
 	 if allleftcol(av,av.xvel,0,0) then
-	  --move av to wall?
+	  --todo:move av to wall?
 	  av.xvel=0
 	 end
  
 	 if allrightcol(av,av.xvel,0,0) then
-	  --move av to wall?
+	  --todo:move av to wall?
 	  av.xvel=0
 	 end
  end
@@ -444,6 +446,20 @@ function allcol(box,xvel,yvel,flag)
  return checkallflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
 end
 
+function edgegroundcol()
+ --hitting one corner counts as a ground collision
+ -- prevents zip on hitting one corner,
+ -- but can cause player to stop dead and not bounce
+ -- on hitting edge
+
+ local ground=groundcol(av,0,av.yvel,0)
+
+ local left=bottomleftonlycol(av,av.xvel,av.yvel,0)
+ local right=bottomrightonlycol(av,av.xvel,av.yvel,0)
+
+ return ground or left or right
+end
+
 function groundcol(box,xvel,yvel,flag)
  local x=box.x+xvel
  local y=box.y+yvel
@@ -465,10 +481,21 @@ function leftcol(box,xvel,yvel,flag)
   checkflag(x,y+h,flag)
 end
 
-function allleftcol(box,xvel,yvel,flag)
+function bottomleftonlycol(box,xvel,yvel,flag)
  local x=box.x+xvel
  local y=box.y+yvel
  local w=box.w
+ local h=box.h
+
+ return checkflag(x,y+h,flag) and
+  not checkflag(x,y,flag) and
+  not checkflag(x+w,y+h,flag) and
+  not checkflag(x,y+(h-(h/4)),flag)
+end
+
+function allleftcol(box,xvel,yvel,flag)
+ local x=box.x+xvel
+ local y=box.y+yvel
  local h=box.h
 
  return
@@ -485,6 +512,18 @@ function rightcol(box,xvel,yvel,flag)
  return
   checkflag(x+w,y,flag) or
   checkflag(x+w,y+h,flag)
+end
+
+function bottomrightonlycol(box,xvel,yvel,flag)
+ local x=box.x+xvel
+ local y=box.y+yvel
+ local w=box.w
+ local h=box.h
+
+ return checkflag(x+w,y+h,flag) and
+  not checkflag(x+w,y,flag) and
+  not checkflag(x,y+h,flag) and
+  not checkflag(x+w,y+(h-(h/4)),flag)
 end
 
 function allrightcol(box,xvel,yvel,flag)
@@ -619,18 +658,31 @@ function initlevels()
  --should x and y find the
  -- find the enterance 
  lvls={
-  {xmap=2,ymap=1,w=2,h=1},
-  {xmap=4,ymap=1,w=1,h=2},
+  --wide level
+  --{xmap=2,ymap=1,w=2,h=1},
+  --tall level
+  --{xmap=4,ymap=1,w=1,h=2},
+  --hook maze
   --{xmap=0,ymap=3,w=1,h=1},
+  --art test
   --{xmap=0,ymap=0,w=3,h=1},
+  --hooks and slows
   --{xmap=0,ymap=2,w=1,h=1},
+  --wide slows
   --{xmap=0,ymap=1,w=2,h=1},
+  --climb upwards slows
   --{xmap=1,ymap=2,w=1,h=1},
+  --moving hooks
   --{xmap=1,ymap=3,w=1,h=1},
-  --{xmap=2,ymap=3,w=1,h=1},
+  --static swing power test
+  {xmap=2,ymap=3,w=1,h=1},
+  --convayer belts
   --{xmap=3,ymap=3,w=1,h=1},
+  --important plob level
   --{xmap=4,ymap=3,w=1,h=1},
+  --out of way key
   --{xmap=5,ymap=3,w=1,h=1},
+  --test level
   --{xmap=6,ymap=3,w=1,h=1},
  }
  
