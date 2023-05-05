@@ -353,6 +353,8 @@ function updateplaying()
  updateav()
 
  updateanims()
+ 
+ updateparticleeffects() --tab 6
 end
 
 function _draw()
@@ -402,6 +404,9 @@ function drawplaying()
   --circ((h.x+h.xcenoff)*8,(h.y+h.ycenoff)*8,h.r*8)
  end
 
+ --tab 6
+ drawparticles(false)
+ 
  --av draw
  -- -2 for sprite offset
  spr(av.anim.sprite,
@@ -419,6 +424,8 @@ function drawplaying()
  
  --cicle collision
  --circ((av.x+av.r)*8,(av.y+av.r)*8,av.r*8)
+ 
+ drawparticles(true)
  
  linecol=9
  
@@ -1249,6 +1256,12 @@ function avanimfind(t)
   t.sprites=1
  end
 
+ local flipval=-1
+ 
+ if av.xflip then
+  flipval=1
+ end
+  
  --charge anim when adding force
  if swing.force>swing.lowf then
   --bottom half of swing force
@@ -1258,6 +1271,11 @@ function avanimfind(t)
    t.speed=10
    
    lsfx(2)
+   
+   initdustkick(flipval,0.25,
+    0.5,0.5,
+    1,0,nil,av.hurtbox,false)
+
   elseif swing.force<=swing.highf-((swing.highf-swing.lowf)/10) then
    --top half
    t.basesprite=43
@@ -1265,6 +1283,11 @@ function avanimfind(t)
    t.speed=8
    
    lsfx(3)
+   
+   initdustkick(flipval,0.25,
+    0.5,0.5,
+    2,4,nil,av.hurtbox,false)
+
   else
    --top 10%
    t.basesprite=43
@@ -1272,6 +1295,11 @@ function avanimfind(t)
    t.speed=2
    
    lsfx(4)
+   
+   initdustkick(flipval,0.25,
+    0.5,0.5,
+    3,5,nil,av.hurtbox,false)
+
   end
  end
 
@@ -1349,8 +1377,6 @@ end
 -- ending state
 
 function initending()
- debug="you win!"
- 
  ycredits=-64
  
  currentupdate=updateending
@@ -1420,6 +1446,98 @@ function outline(s,x,y,c1,c2)
   end
  end
  print(s,x+1,y+1,c2)
+end
+
+-->8
+--particle effects
+
+effects={}
+avcolours={6,7,8}
+
+function createeffect(update)
+ e={
+  update=update,
+  front=false,
+  particles={}
+ }
+ add(effects,e)
+ return e
+end
+
+function createparticle(x,y,xvel,yvel,r,col)
+ p={
+  x=x,
+  y=y,
+  xvel=xvel,
+  yvel=yvel,
+  r=r,
+  col=col
+ }
+ return p
+end
+
+function updateparticleeffects()
+ for e in all(effects) do
+  e.update(e)
+ end
+end
+
+function drawparticles(front)
+ for e in all(effects) do
+  if e.front==front then
+   for p in all(e.particles) do
+    circfill(p.x,p.y,p.r,p.col)
+   end
+  end
+ end
+end
+
+function initdustkick(dx,dy,rdx,rdy,no,minlength,overridecol,box,front)
+ local e=createeffect(updatedustkick)
+ e.front=front or false
+
+ --create a bunch of particles
+ for i=0,no do
+  local col=avcolours[1+flr(rnd(#avcolours))]
+  
+  col=overridecol or col
+  
+  local lrdx=rnd(rdx)
+  if rdx<0 then
+   lrdx=rnd(abs(rdx))*-1
+  end
+  
+  local p=createparticle(
+   (box.x+(box.w/2))*8,
+   box.y*8,
+   dx+lrdx,dy+rnd(rdy),
+   0+flr(rnd(2)),col)
+  
+  p.timeout=minlength+rnd(5)
+  add(e.particles,p)
+ end
+end
+
+function updatedustkick(e)
+ for p in all(e.particles) do
+  p.x+=p.xvel
+  p.y+=p.yvel
+  
+  p.timeout-=1
+  
+  if p.timeout<=0 then
+   if p.r>0 then
+    p.r=0
+    p.timeout=5
+   else
+    del(e.particles,p)
+   end
+  end
+ end
+ 
+ if #e.particles==0 then
+  del(effects,e)
+ end
 end
 
 __gfx__
