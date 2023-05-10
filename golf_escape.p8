@@ -160,6 +160,9 @@ function updateplaying()
   if groundcol(av,0,av.yvel,6) or
      abs(av.yvel)<0.075 then
    
+   --todo:landing particles
+   -- if sandpit, use yellow ones
+   
    if av.colstate!="ground" then
     sfx(8)
    end
@@ -224,7 +227,7 @@ function updateplaying()
 	  av.pauseanim="rsquish"
 	  
 	  collisionimpact(av.x+av.w,av.y+(av.h/2),
-	   -0.25,1,true)
+	   -0.75,1,true)
 
 	  moveavtoright()
 	  av.xvel*=-1
