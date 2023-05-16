@@ -41,9 +41,9 @@ function _init()
  
  --todo:make camera an obj
  xcamera,ycamera=0,0
- 
  xcameravel,ycameravel=0,0
- 
+ prevtiledestination=8
+
  makebackgrounds()
  
  currentupdate=updateplaying
@@ -665,9 +665,9 @@ function initlevels()
   --wide level bunkers
   {xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
-  {xmap=2,ymap=2,w=2,h=1},
+  --{xmap=2,ymap=2,w=2,h=1},
   --extra wide level golf course
-  {xmap=5,ymap=3,w=3,h=1},
+  --{xmap=5,ymap=3,w=3,h=1},
   --tall level camera test
   {xmap=4,ymap=1,w=1,h=2},
   --tall level design tests
@@ -988,37 +988,27 @@ function updateav()
 end
 
 function updatecamera()
+ --range for angle to move camera right or left
+ local rightrange={low=0.3,high=0.75}
+ local leftrange={low=0.75,high=0.2}
 
- --todo:won't exist
- -- when not aiming.
- -- default to another value.
- local lastpoint=aim.points[#aim.points]
- 
- local x=av.x
- 
- if lastpoint then
-  x=lastpoint.x
- end
- 
  -- don't allow camera off map
  if av.x>0 and av.x<127 then
-  xcamera=camera1d(xcamera,currlvl.xmap,currlvl.w,av.x,av.w,swing.xvec,x)
+  xcamera=camera1d(xcamera,currlvl.xmap,currlvl.w,av.x,av.w,rightrange,leftrange)
  end
  
- local y=av.y
- 
- if lastpoint then
-  y=lastpoint.y
- end
- 
+ --range for angle to move camera up or down
+ local highrange={low=0.15,high=0.35}
+ local lowrange={low=0.05,high=0.45}
+
  if av.y>0 and av.y<63 then
-  ycamera=camera1d(ycamera,currlvl.ymap,currlvl.h,av.y,av.h,swing.yvec,y)
+  ycamera=camera1d(ycamera,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
  end
 
  camera(xcamera*128,ycamera*128) 
 end
 
-function camera1d(camera,lvlpos,lvllength,avpos,avlength,swingvec,aimendpos)
+function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
  local lowbound=3
  --account for player width
  local highbound=12.5
@@ -1029,13 +1019,17 @@ function camera1d(camera,lvlpos,lvllength,avpos,avlength,swingvec,aimendpos)
 		camera=flr((avpos+avlength*0.5)/16)
 	else
 		--scrolling camera
-		local tiledestination=8
+		local tiledestination=prevtiledestination
 		
+  local aimangle=atan2(swing.xvec,swing.yvec)
+ 
 		if av.canswing then
-			if avpos>aimendpos then
+			if angleinrange(aimangle,highrange) then
 				tiledestination=highbound
-			else
+				prevtiledestination=tiledestination
+			elseif angleinrange(aimangle,lowrange) then
 				tiledestination=lowbound
+				prevtiledestination=tiledestination
 			end
 			
 			local cameradest=(avpos-tiledestination)/16
@@ -1082,6 +1076,12 @@ function camera1d(camera,lvlpos,lvllength,avpos,avlength,swingvec,aimendpos)
 		end
 	end
 	return camera
+end
+
+function angleinrange(angle,range)
+ --account for looping
+ return angle>range.low and angle<range.high or 
+  (range.low>range.high and (angle>range.low or angle<range.high)) 
 end
 
 function updateaim()
