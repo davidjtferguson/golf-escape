@@ -159,11 +159,17 @@ function updateplaying()
   --if vel low enough, land
   if groundcol(av,0,av.yvel,6) or
      abs(av.yvel)<0.075 then
-   
-   --todo:landing particles
-   -- if sandpit, use yellow ones
-   
+
    if av.colstate!="ground" then
+    local cols=avcolours
+
+    if groundcol(av,0,av.yvel,6) then
+     cols=sandcolours
+    end
+
+    collisionimpact(av.x+(av.w/2),av.y+av.h,
+     1,-0.25,false,cols)
+
     sfx(8)
    end
    
@@ -189,7 +195,7 @@ function updateplaying()
    av.pauseanim="gsquish"
    
    collisionimpact(av.x+(av.w/2),av.y+av.h,
-	   1,-0.25,false)
+	   1,-0.25,false,avcolours)
   end
  else
   if av.slowstate=="in" then
@@ -211,14 +217,14 @@ function updateplaying()
 	  av.pauseanim="tsquish"
 
 	  collisionimpact(av.x+(av.w/2),av.y,
-	   1,0.25,false)
+	   1,0.25,false,avcolours)
 	 end
  
   if leftcol(av,av.xvel,av.yvel,0) then
 	  av.pauseanim="lsquish"
 
 	  collisionimpact(av.x,av.y+(av.h/2),
-	   0.25,1,true)
+	   0.25,1,true,avcolours)
 
 	  moveavtoleft()
 	  av.xvel*=-1
@@ -227,7 +233,7 @@ function updateplaying()
 	  av.pauseanim="rsquish"
 	  
 	  collisionimpact(av.x+av.w,av.y+(av.h/2),
-	   -0.75,1,true)
+	   -0.75,1,true,avcolours)
 
 	  moveavtoright()
 	  av.xvel*=-1
@@ -1279,7 +1285,7 @@ function avanimfind(t)
    if frames%6==0 then
 	   initdustkick(lx,ly,flipval,0.25,
 	    0.5,0.5,
-	    1,0,nil,false)
+	    1,0,sparkcolours,false)
    end
   elseif swing.force<=swing.highf-((swing.highf-swing.lowf)/10) then
    --top half
@@ -1292,7 +1298,7 @@ function avanimfind(t)
    if frames%5==0 then
 	   initdustkick(lx,ly,flipval,0.25,
 	    0.5,0.5,
-	    2,4,nil,false)
+	    2,4,sparkcolours,false)
    end
   else
    --top 10%
@@ -1305,7 +1311,7 @@ function avanimfind(t)
    if frames%3==0 then
 	   initdustkick(lx,ly,flipval,0.25,
 	    0.5,0.5,
-	    3,5,nil,false)
+	    3,5,sparkcolours,false)
    end
   end
  end
@@ -1459,7 +1465,9 @@ end
 --particle effects
 
 effects={}
-avcolours={6,7,8}
+sparkcolours={6,7,8}
+avcolours={15,15,4,6}
+sandcolours={10,10,9,6}
 
 function createeffect(update)
  e={
@@ -1499,15 +1507,13 @@ function drawparticles(front)
  end
 end
 
-function initdustkick(x,y,dx,dy,rdx,rdy,no,minlength,overridecol,front)
+function initdustkick(x,y,dx,dy,rdx,rdy,no,minlength,cols,front)
  local e=createeffect(updatedustkick)
  e.front=front or false
 
  --create a bunch of particles
  for i=0,no do
-  local col=avcolours[1+flr(rnd(#avcolours))]
-  
-  col=overridecol or col
+  local col=cols[1+flr(rnd(#cols))]
   
   local lrdx=rnd(rdx)
   if rdx<0 then
@@ -1547,7 +1553,7 @@ function updatedustkick(e)
  end
 end
 
-function collisionimpact(x,y,dx,dy,wall)
+function collisionimpact(x,y,dx,dy,wall,cols)
  sfx(0)
 
  --todo:scale based on force
@@ -1559,7 +1565,7 @@ function collisionimpact(x,y,dx,dy,wall)
  initdustkick(x,y,
   dx,dy,
   0.5,0.5,
-  3,5,nil,false)
+  3,5,cols,false)
  
  if wall then
   dy*=-1
@@ -1570,9 +1576,7 @@ function collisionimpact(x,y,dx,dy,wall)
  initdustkick(x,y,
   dx,dy,
   0.5,0.5,
-  3,5,nil,false)
- 
-
+  3,5,cols,false)
 end
 
 function feetpos()
@@ -1583,8 +1587,8 @@ function feetpos()
  end
 end
 __gfx__
-0000000022222222aaa9aaa9d66666666666666d686868680000000000000000c0c0c0c000000000000000000060000000000000000000000040040000000000
-000000002bbbbbb209aaa1a02dddd6d66d6dddd28585858600702200000000000c0c0c0c0000000000070000000777000060000000404000000ff00000000000
+0000000022222222aaa9aaa9aaa9aa9aa9a9aa9a686868680000000000000000c0c0c0c000000000000000000060000000000000000000000040040000000000
+000000002bbbbbb209aaa1a029dad6a9a9aad9d28585858600702200000000000c0c0c0c0000000000070000000777000060000000404000000ff00000000000
 000770002bbbbbb20000000027766c7667866772685858580071220000000000c0c0c0c000777700006770000007707000077700000ff000001ff10000000000
 006777002bbbbbb2001100002cccccc7788888828585858600712200000000000c0c0c0c0677777000677000000707700007707000f1f10000ffef0000000000
 006677002bbbbbb2001100002cccccc228888882685858580071000000000000c0c0c0c00067770000777000000777000007077004fffe00000ff00000000000
