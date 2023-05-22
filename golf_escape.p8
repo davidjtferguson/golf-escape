@@ -40,10 +40,16 @@ function _init()
  resetav()
  
  --todo:make camera an obj
- xcamera,ycamera=0,0
- xcameravel,ycameravel=0,0
- prevtiledestination=8
-
+ cam={
+  x=0,
+  y=0,
+  xvel=0,
+  yvel=0,
+  prevtiledest=8,
+  free=false,
+  canmove=true,
+ }
+ 
  makebackgrounds()
  
  currentupdate=updateplaying
@@ -110,8 +116,10 @@ function updateplaying()
   --release swing
   if btnp(🅾️) then
    sfx(1)
-  
+   
    swingcount+=1
+  
+   cam.free=false
   
    applyswing(av)
 
@@ -351,8 +359,8 @@ function updateplaying()
     currlvl.key.collected then
   --todo:what should 'inventory' look like?
   -- show key is in inventory
-  currlvl.key.x=(xcamera*16)+7
-  currlvl.key.y=(ycamera*16)+15
+  currlvl.key.x=(cam.x*16)+7
+  currlvl.key.y=(cam.y*16)+15
 
   --todo: have mechanic where
   -- hitting a checkpoint 'saves' the key?
@@ -368,7 +376,7 @@ end
 function _draw()
  currentdraw()
 
- print(debug,xcamera*128,ycamera*128,1)
+ print(debug,cam.x*128,cam.y*128,1)
 end
 
 function drawplaying()
@@ -391,6 +399,12 @@ function drawplaying()
  
  if av.canswing then
   --draw aim
+  
+  linecol=9
+  
+  if swing.currdecaypause>0 then
+   linecol=10
+  end
   
   --todo:consider look. lines?
   for point in all(aim.points) do
@@ -435,10 +449,18 @@ function drawplaying()
  
  drawparticles(true)
  
- linecol=9
- 
- if swing.currdecaypause>0 then
-  linecol=10
+ if cam.free then
+  if currlvl.w>1 then
+   --todo:rotate accordingly
+   drawobj({s=16,x=(cam.x*16)+14,y=(cam.y*16)+7})
+   drawobj({s=16,x=(cam.x*16)+1,y=(cam.y*16)+7})
+  elseif currlvl.h>1 then
+  
+   drawobj({s=16,x=(cam.x*16)+7,y=(cam.y*16)+14})
+
+   drawobj({s=16,x=(cam.x*16)+7,y=(cam.y*16)+1})
+
+  end
  end
 end
 
@@ -669,7 +691,7 @@ function initlevels()
  -- find the enterance 
  lvls={
   --wide level bunkers
-  {xmap=2,ymap=1,w=2,h=1},
+  --{xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
   --{xmap=2,ymap=2,w=2,h=1},
   --extra wide level golf course
@@ -999,22 +1021,79 @@ function updatecamera()
  local leftrange={low=0.75,high=0.2}
 
  -- don't allow camera off map
- if av.x>0 and av.x<127 then
-  xcamera=camera1d(xcamera,currlvl.xmap,currlvl.w,av.x,av.w,rightrange,leftrange)
- end
+ --todo:add back in
+ --if av.x>0 and av.x<127 then
+  local xcamdest=camera1d(cam.x,currlvl.xmap,currlvl.w,av.x,av.w,rightrange,leftrange)
+ --end
  
  --range for angle to move camera up or down
  local highrange={low=0.175,high=0.325}
  local lowrange={low=0.45,high=0.05}
 
- if av.y>0 and av.y<63 then
-  ycamera=camera1d(ycamera,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
+ --if av.y>0 and av.y<63 then
+  local ycamdest=camera1d(cam.y,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
+ --end
+
+ local cammovespeed=pixel/4
+
+ if btn(⬆️) and cam.canmove then
+  cam.free=true
+  if currlvl.w>1 then
+   --todo:have short accel
+   cam.x-=cammovespeed
+   
+   --todo:sort bounds
+   if xcamdest<cam.x then
+    cam.free=false
+    cam.canmove=false
+   end
+  elseif currlvl.h>1 then
+   cam.y-=cammovespeed
+   
+   if ycamdest<cam.y then
+	   cam.free=false
+	   cam.canmove=false
+	  end
+  end
+ end
+ 
+ if btn(⬇️) and cam.canmove then
+  cam.free=true
+  if currlvl.w>1 then
+   cam.x+=cammovespeed
+   
+   if xcamdest>cam.x then
+    cam.free=false
+    cam.canmove=false
+   end
+  elseif currlvl.h>1 then
+   cam.y+=cammovespeed
+   
+   if ycamdest>cam.y then
+	   cam.free=false
+	   cam.canmove=false
+	  end
+  end
  end
 
- camera(xcamera*128,ycamera*128)
+ debug=(cam.y*16)..".."..av.y
+
+ --todo:turn canmove back on
+ -- once input stops
+ if not cam.canmove and not btn(⬇️) then
+  cam.canmove=true
+ end
+
+ --todo:still apply camera bounds
+ if not cam.free then
+  cam.x=xcamdest
+  cam.y=ycamdest
+ end
+
+ camera(cam.x*128,cam.y*128)
 end
 
-function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
+function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
  local lowbound=3
  --account for player width
  local highbound=12.5
@@ -1022,20 +1101,20 @@ function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
  local maxscrollspeed=0.1
 
 	if lvllength==1 then
-		camera=flr((avpos+avlength*0.5)/16)
-	else
+		lcam=flr((avpos+avlength*0.5)/16)
+	elseif not cam.free then
 		--scrolling camera
-		local tiledestination=prevtiledestination
+		local tiledestination=cam.prevtiledest
 		
   local aimangle=atan2(swing.xvec,swing.yvec)
  
 		if av.canswing then
 			if angleinrange(aimangle,highrange) then
 				tiledestination=highbound
-				prevtiledestination=tiledestination
+				cam.prevtiledest=tiledestination
 			elseif angleinrange(aimangle,lowrange) then
 				tiledestination=lowbound
-				prevtiledestination=tiledestination
+				cam.prevtiledest=tiledestination
 			end
 			
 			local cameradest=(avpos-tiledestination)/16
@@ -1049,7 +1128,7 @@ function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 				cameradest=lvlpos+lvllength-1
 			end
 
-			local cameradiff=cameradest-camera
+			local cameradiff=cameradest-lcam
 			
 			cameradiff*=scrollfrac
 			
@@ -1059,29 +1138,30 @@ function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 				cameradiff=-maxscrollspeed
 			end
 			
-			camera+=cameradiff
+			lcam+=cameradiff
 		else
 			--camera only moves if
 			-- player gets past deadzone
-			if avpos/16<camera+(lowbound/16) then
-				camera=(avpos-lowbound)/16   
+			if avpos/16<lcam+(lowbound/16) then
+				lcam=(avpos-lowbound)/16   
 			end
 
-			if avpos/16>camera+(highbound/16) then
-				camera=(avpos-highbound)/16
+			if avpos/16>lcam+(highbound/16) then
+				lcam=(avpos-highbound)/16
 			end
 		end
-		
-		--don't scroll off level
-		if camera<lvlpos then
-			camera=lvlpos
-		end
-		
-		if camera>lvlpos+lvllength-1 then
-			camera=lvlpos+lvllength-1
-		end
 	end
-	return camera
+	
+	--don't scroll off level
+	if lcam<lvlpos then
+		lcam=lvlpos
+	end
+	
+	if lcam>lvlpos+lvllength-1 then
+		lcam=lvlpos+lvllength-1
+	end
+	
+	return lcam
 end
 
 function angleinrange(angle,range)
@@ -1412,19 +1492,19 @@ function drawending()
  
  s="golf!"
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits,c1,c2)
  
  s="by davbo and rory"
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits+8,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits+8,c1,c2)
  
  s="deaths: "..deathcount
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits+16,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits+16,c1,c2)
 
  s="swings: "..swingcount
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits+24,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits+24,c1,c2)
 
  s="playtime: "..
  twodigit(hours)..":"..
@@ -1432,11 +1512,11 @@ function drawending()
  twodigit(seconds).."."..
  twodigit(frames)
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits+32,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits+32,c1,c2)
 
  s="thanks for playing!"
  outline(s,
-  (xcamera*128)+hw(s),(ycamera*128)+ycredits+40,c1,c2)
+  (cam.x*128)+hw(s),(cam.y*128)+ycredits+40,c1,c2)
 end
 
 function twodigit(val)
@@ -1596,12 +1676,12 @@ __gfx__
 000000002bbbbbb20000000025ddd2d66d2ddd52685858580070000000000000c0c0c0c00000000000000000000000000000000000f0f0000f0000f000000000
 0000000022222222000000002222222dd22222228686868600700000000000000c0c0c0c00000000000000000000000000000000000000000000000000000000
 0000000000000000aaa9aaa900666600006666000066660000000a00000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000029aaa2a20611116006ccac60065665600000a0a0007077000070070000700000000000000000404000004040000040400000000000000000
-00000000000000002bbbbbb2611111166ccacac6644564460000a00a007677000076770000767700000000000000fff00040fff00000fff00000000000000000
-00000000000000002bbbbbb2611111166cccaca665566556000aaaa000767700007677000076770000000000004f1f10000f1f10004f1f100000000000000000
-00000000000000002bbbbbb2611111166ccacac66446544600aa0000007600000076700000706700000000000f0ffe00040ffe00040ffe000000000000000000
-00000000000000002bbbbbb2611111166cccccc6655665560aa0000000700000007000000070000000000000404ff00000fff000400ff0000000000000000000
-00000000000000002bbbbbb2611111166cccccc6644564460a0a00000070000000700000007000000000000000000000040000000f0000000000000000000000
+000022000000000029aaa2a20611116006ccac60065665600000a0a0007077000070070000700000000000000000404000004040000040400000000000000000
+00002220000000002bbbbbb2611111166ccacac6644564460000a00a007677000076770000767700000000000000fff00040fff00000fff00000000000000000
+22222222000000002bbbbbb2611111166cccaca665566556000aaaa000767700007677000076770000000000004f1f10000f1f10004f1f100000000000000000
+22222222000000002bbbbbb2611111166ccacac66446544600aa0000007600000076700000706700000000000f0ffe00040ffe00040ffe000000000000000000
+00002220000000002bbbbbb2611111166cccccc6655665560aa0000000700000007000000070000000000000404ff00000fff000400ff0000000000000000000
+00002200000000002bbbbbb2611111166cccccc6644564460a0a00000070000000700000007000000000000000000000040000000f0000000000000000000000
 000000000000000022222222611111166cccccc66556655600a00000007000000070000000700000000000000000000000000000000000000000000000000000
 000aa000000880000008800000022000000220000002200000022000000220000008800000000000000000000000000000000000000000000000000000000000
 009aa900002882000022880000228800002228000022220000822200008822000088220000000000000404000000040400004040000040400000000000000000
