@@ -1004,14 +1004,14 @@ function updatecamera()
  end
  
  --range for angle to move camera up or down
- local highrange={low=0.15,high=0.35}
- local lowrange={low=0.05,high=0.45}
+ local highrange={low=0.175,high=0.325}
+ local lowrange={low=0.45,high=0.05}
 
  if av.y>0 and av.y<63 then
   ycamera=camera1d(ycamera,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
  end
 
- camera(xcamera*128,ycamera*128) 
+ camera(xcamera*128,ycamera*128)
 end
 
 function camera1d(camera,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
