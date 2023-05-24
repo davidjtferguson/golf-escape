@@ -39,10 +39,14 @@ function _init()
  
  resetav()
  
- --todo:make camera an obj
  cam={
+		--target x,y
   x=0,
   y=0,
+		--free control x,y
+		xfree=0,
+		yfree=0,
+		freedirect="none",
   xvel=0,
   yvel=0,
   prevtiledest=8,
@@ -359,8 +363,8 @@ function updateplaying()
     currlvl.key.collected then
   --todo:what should 'inventory' look like?
   -- show key is in inventory
-  currlvl.key.x=(cam.x*16)+7
-  currlvl.key.y=(cam.y*16)+15
+  currlvl.key.x=(cam.xfree*16)+7
+  currlvl.key.y=(cam.yfree*16)+15
 
   --todo: have mechanic where
   -- hitting a checkpoint 'saves' the key?
@@ -376,7 +380,7 @@ end
 function _draw()
  currentdraw()
 
- print(debug,cam.x*128,cam.y*128,1)
+ print(debug,cam.xfree*128,cam.yfree*128,1)
 end
 
 function drawplaying()
@@ -452,14 +456,11 @@ function drawplaying()
  if cam.free then
   if currlvl.w>1 then
    --todo:rotate accordingly
-   drawobj({s=16,x=(cam.x*16)+14,y=(cam.y*16)+7})
-   drawobj({s=16,x=(cam.x*16)+1,y=(cam.y*16)+7})
+   drawobj({s=16,x=(cam.xfree*16)+14,y=(cam.yfree*16)+7})
+   drawobj({s=16,x=(cam.xfree*16)+1,y=(cam.yfree*16)+7})
   elseif currlvl.h>1 then
-  
-   drawobj({s=16,x=(cam.x*16)+7,y=(cam.y*16)+14})
-
-   drawobj({s=16,x=(cam.x*16)+7,y=(cam.y*16)+1})
-
+   drawobj({s=16,x=(cam.xfree*16)+7,y=(cam.yfree*16)+14})
+   drawobj({s=16,x=(cam.xfree*16)+7,y=(cam.yfree*16)+1})
   end
  end
 end
@@ -1021,94 +1022,124 @@ function updatecamera()
  local leftrange={low=0.75,high=0.2}
 
  -- don't allow camera off map
- --todo:add back in
- --if av.x>0 and av.x<127 then
-  local xcamdest=camera1d(cam.x,currlvl.xmap,currlvl.w,av.x,av.w,rightrange,leftrange)
- --end
+ if av.x>0 and av.x<127 then
+  cam.x=camera1d(cam.x,currlvl.xmap,currlvl.w,av.x,av.w,rightrange,leftrange)
+ end
  
  --range for angle to move camera up or down
  local highrange={low=0.175,high=0.325}
  local lowrange={low=0.45,high=0.05}
 
- --if av.y>0 and av.y<63 then
-  local ycamdest=camera1d(cam.y,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
- --end
+ if av.y>0 and av.y<63 then
+  cam.y=camera1d(cam.y,currlvl.ymap,currlvl.h,av.y,av.h,highrange,lowrange)
+ end
 
  local cammovespeed=pixel/4
 
- if btn(⬆️) and cam.canmove then
+ if not cam.free then
+  cam.xfree=movetopoint(cam.xfree,cam.x)
+  cam.yfree=movetopoint(cam.yfree,cam.y)
+	end
+
+ if btn(⬆️) and cam.canmove and av.canswing then
   cam.free=true
+  
+  if cam.freedirect=="none" then
+		 cam.freedirect="up"
+		end
+
   if currlvl.w>1 then
    --todo:have short accel
-   cam.x-=cammovespeed
+   cam.xfree-=cammovespeed
    
-   --todo:sort bounds
-   if xcamdest<cam.x then
+   if cam.xfree<cam.x and cam.freedirect=="down" then
     cam.free=false
     cam.canmove=false
+				cam.freedirect="none"
    end
   elseif currlvl.h>1 then
-   cam.y-=cammovespeed
+   cam.yfree-=cammovespeed
    
-   if ycamdest<cam.y then
+   if cam.yfree<cam.y and cam.freedirect=="down" then
 	   cam.free=false
 	   cam.canmove=false
+				cam.freedirect="none"
 	  end
   end
  end
  
- if btn(⬇️) and cam.canmove then
+ if btn(⬇️) and cam.canmove and av.canswing then
   cam.free=true
+
+  if cam.freedirect=="none" then
+		 cam.freedirect="down"
+		end
+
   if currlvl.w>1 then
-   cam.x+=cammovespeed
+   cam.xfree+=cammovespeed
    
-   if xcamdest>cam.x then
+   if cam.xfree>cam.x and cam.freedirect=="up" then
     cam.free=false
     cam.canmove=false
+				cam.freedirect="none"
    end
   elseif currlvl.h>1 then
-   cam.y+=cammovespeed
+   cam.yfree+=cammovespeed
    
-   if ycamdest>cam.y then
+   if cam.yfree>cam.y and cam.freedirect=="up" then
 	   cam.free=false
 	   cam.canmove=false
+				cam.freedirect="none"
 	  end
   end
  end
 
- debug=(cam.y*16)..".."..av.y
-
- --todo:turn canmove back on
- -- once input stops
- if not cam.canmove and not btn(⬇️) then
+ if not cam.canmove and not btn(⬆️) and not btn(⬇️) then
   cam.canmove=true
  end
 
- --todo:still apply camera bounds
- if not cam.free then
-  cam.x=xcamdest
-  cam.y=ycamdest
- end
+ --todo:call camera1dbounds less? tidy, maybe renaming
+ --if cam.free then
+  cam.xfree=camera1dbounds(cam.xfree,currlvl.xmap,currlvl.w)
+  cam.yfree=camera1dbounds(cam.yfree,currlvl.ymap,currlvl.h)
 
- camera(cam.x*128,cam.y*128)
+  camera(cam.xfree*128,cam.yfree*128)
+-- else
+ -- cam.x=camera1dbounds(cam.x,currlvl.xmap,currlvl.w)
+ -- cam.y=camera1dbounds(cam.y,currlvl.ymap,currlvl.h)
+
+ -- camera(cam.x*128,cam.y*128)
+ --end
+end
+
+function camera1dbounds(lcam,lvlpos,lvllength)
+	--don't scroll off level
+	if lcam<lvlpos then
+		lcam=lvlpos
+	end
+	
+	if lcam>lvlpos+lvllength-1 then
+		lcam=lvlpos+lvllength-1
+	end
+
+	return lcam
 end
 
 function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
  local lowbound=3
  --account for player width
  local highbound=12.5
- local scrollfrac=0.25
- local maxscrollspeed=0.1
 
 	if lvllength==1 then
 		lcam=flr((avpos+avlength*0.5)/16)
-	elseif not cam.free then
-		--scrolling camera
-		local tiledestination=cam.prevtiledest
-		
-  local aimangle=atan2(swing.xvec,swing.yvec)
- 
+	else
 		if av.canswing then
+
+			--scrolling camera
+			local tiledestination=cam.prevtiledest
+			
+			local aimangle=atan2(swing.xvec,swing.yvec)
+
 			if angleinrange(aimangle,highrange) then
 				tiledestination=highbound
 				cam.prevtiledest=tiledestination
@@ -1128,18 +1159,10 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 				cameradest=lvlpos+lvllength-1
 			end
 
-			local cameradiff=cameradest-lcam
-			
-			cameradiff*=scrollfrac
-			
-			if cameradiff>maxscrollspeed then
-				cameradiff=maxscrollspeed
-			elseif cameradiff<-maxscrollspeed then
-				cameradiff=-maxscrollspeed
-			end
-			
-			lcam+=cameradiff
-		else
+ 
+  lcam=movetopoint(lcam,cameradest)
+
+		else --can't swing
 			--camera only moves if
 			-- player gets past deadzone
 			if avpos/16<lcam+(lowbound/16) then
@@ -1152,16 +1175,28 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 		end
 	end
 	
-	--don't scroll off level
-	if lcam<lvlpos then
-		lcam=lvlpos
-	end
-	
-	if lcam>lvlpos+lvllength-1 then
-		lcam=lvlpos+lvllength-1
-	end
-	
 	return lcam
+end
+
+function movetopoint(from,to)
+ local scrollfrac=0.25
+ local maxscrollspeed=0.1
+
+	local cameradiff=to-from
+	
+ if abs(cameradiff)<0.01 then
+	 return to
+	end
+
+	cameradiff*=scrollfrac
+	
+	if cameradiff>maxscrollspeed then
+		cameradiff=maxscrollspeed
+	elseif cameradiff<-maxscrollspeed then
+		cameradiff=-maxscrollspeed
+	end
+	
+	return from+cameradiff
 end
 
 function angleinrange(angle,range)
