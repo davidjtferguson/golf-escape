@@ -179,11 +179,6 @@ function updateplaying()
  updateaim()
 
  --collision
- --hack to help with corners
- if allcol(av,av.xvel,av.yvel,0) then
-  av.xvel=0
-  av.yvel=0
- end
  
  --ground col
  if groundcol(av,0,av.yvel,0) then
