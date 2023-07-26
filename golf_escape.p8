@@ -28,18 +28,16 @@ function _init()
  -- state
  squishpause=4
  
+ --vars
+
  --checkpoint
  xcp=0
  ycp=0
+ cpanim=makeanimt(23,10,3)
  
  --hack for top corner collision
  topcoloverwrite=false
 
- --set a lvl in initlevels()
- -- to set player spawn point
- 
- cpanim=makeanimt(23,10,3)
- 
  resetav()
  
  cam={
@@ -55,6 +53,8 @@ function _init()
   prevtiledest=8,
   free=false,
   canmove=true,
+  arrowcounter=0,
+  arrowcountermax=120,
  }
  
  makebackgrounds()
@@ -409,10 +409,9 @@ function updateplaying()
  
  if currlvl.haskey and
     currlvl.key.collected then
-  --todo:what should 'inventory' look like?
-  -- show key is in inventory
-  currlvl.key.x=(cam.xfree*16)+7
-  currlvl.key.y=(cam.yfree*16)+15
+    --get out of the way
+    currlvl.key.x=-1
+    currlvl.key.y=-1
 
   --todo: have mechanic where
   -- hitting a checkpoint 'saves' the key?
@@ -438,27 +437,6 @@ function drawplaying()
 
  --draw all of current level
  map(currlvl.xmap*16,currlvl.ymap*16,currlvl.xmap*128,currlvl.ymap*128,currlvl.w*16,currlvl.h*16)
- 
- if av.canswing then
-  --draw aim
-  
-  linecol=9
-  
-  if swing.currdecaypause>0 then
-   linecol=10
-  end
-  
-  --todo:consider look. lines?
-  for point in all(aim.points) do
-   pset(
-    (av.w/2+point.x)*8,
-    (av.h/2+point.y)*8,linecol)
-  end
- 
-  rect(aim.x*8,aim.y*8,
-   (aim.x+aim.w)*8,
-   (aim.y+aim.h)*8,2)
- end
  
  --lvl objs draw
  drawobj(currlvl.exit)
@@ -502,6 +480,28 @@ function drawplaying()
   --circ((h.x+h.xcenoff)*8,(h.y+h.ycenoff)*8,h.r*8)
  end
 
+ if av.canswing then
+  --draw aim
+  
+  linecol=13
+  
+  if swing.currdecaypause>0 then
+   linecol=6
+  end
+  
+  --todo:consider look. lines?
+  for point in all(aim.points) do
+   pset(
+    (av.w/2+point.x)*8,
+    (av.h/2+point.y)*8,linecol)
+  end
+
+  --where player should land for debugging 
+  -- rect(aim.x*8,aim.y*8,
+  --  (aim.x+aim.w)*8,
+  --  (aim.y+aim.h)*8,2)
+ end
+ 
  --tab 6
  drawparticles(false)
  
@@ -526,19 +526,25 @@ function drawplaying()
  drawparticles(true)
  
  if cam.free then
+  --pulse out and in a little
+  local out=cam.arrowcounter>cam.arrowcountermax/2
+  local mod=0
+  if out then
+   mod=2*pixel
+  end
   if currlvl.w>1 then
    --todo:rotate accordingly
-   drawobj({s=16,x=(cam.xfree*16)+14,y=(cam.yfree*16)+7})
-   drawobj({s=16,x=(cam.xfree*16)+1,y=(cam.yfree*16)+7})
+   drawobj({s=16,x=(cam.xfree*16)+14+mod,y=(cam.yfree*16)+7})
+   drawobj({s=16,x=(cam.xfree*16)+1-mod,y=(cam.yfree*16)+7},true)
   elseif currlvl.h>1 then
-   drawobj({s=16,x=(cam.xfree*16)+7,y=(cam.yfree*16)+14})
-   drawobj({s=16,x=(cam.xfree*16)+7,y=(cam.yfree*16)+1})
+   drawobj({s=17,x=(cam.xfree*16)+7,y=(cam.yfree*16)+14+mod})
+   drawobj({s=17,x=(cam.xfree*16)+7,y=(cam.yfree*16)+1-mod},false,true)
   end
  end
 end
 
-function drawobj(obj)
- spr(obj.s,obj.x*8,obj.y*8)
+function drawobj(obj,xflip,yflip)
+ spr(obj.s,obj.x*8,obj.y*8,1,1,xflip,yflip)
 end
 
 function drawcirc(obj)
@@ -794,7 +800,7 @@ function initlevels()
   --wide level long swings
   --{xmap=2,ymap=2,w=2,h=1},
   --extra wide level golf course
-  {xmap=5,ymap=3,w=3,h=1},
+  --{xmap=5,ymap=3,w=3,h=1},
   --tall level camera test
   {xmap=4,ymap=1,w=1,h=2},
   --tall level design tests
@@ -1211,17 +1217,18 @@ function updatecamera()
  end
 
  --todo:call camera1dbounds less? tidy, maybe renaming
- --if cam.free then
-  cam.xfree=camera1dbounds(cam.xfree,currlvl.xmap,currlvl.w)
-  cam.yfree=camera1dbounds(cam.yfree,currlvl.ymap,currlvl.h)
+ cam.xfree=camera1dbounds(cam.xfree,currlvl.xmap,currlvl.w)
+ cam.yfree=camera1dbounds(cam.yfree,currlvl.ymap,currlvl.h)
 
-  camera(cam.xfree*128,cam.yfree*128)
--- else
- -- cam.x=camera1dbounds(cam.x,currlvl.xmap,currlvl.w)
- -- cam.y=camera1dbounds(cam.y,currlvl.ymap,currlvl.h)
+ camera(cam.xfree*128,cam.yfree*128)
 
- -- camera(cam.x*128,cam.y*128)
- --end
+ if cam.free then
+  cam.arrowcounter+=1
+
+  if cam.arrowcounter>=cam.arrowcountermax then
+   cam.arrowcounter=0
+  end
+ end
 end
 
 function camera1dbounds(lcam,lvlpos,lvllength)
@@ -1844,14 +1851,14 @@ __gfx__
 000d60002bbbbbb20000000022222c26628222228585858600700000000000000c0c0c0c78070807780708070000000004fffff000f0f0000000000000000000
 000000002bbbbbb20000000025ddd2d66d2ddd52685858580070000000000000c0c0c0c060878007608780070000000000000000000000000000000000000000
 0000000022222222000000002222222dd22222228686868600700000000000000c0c0c0c66777766667777660000000000000000000000000000000000000000
-0000000000022000aaa9aaa9006666000066660000666600e0e00000000000000000000000000000000000000000000000000000000000000000040400000000
-000022000002200029aaa2a20611116006ccac60065665600800000000707700007007000070000000000000000040400000404000004040000007f700004040
-00002220000220002bbbbbb2611111166ccacac66445644608000000007677000076770000767700000000000040fff00040fff00040fff00000717100000fff
-22222222000220002bbbbbb2611111166cccaca6655665560800080000767700007677000076770000000000000f1f10000f1f10000f1f100040f7e70400f1f1
-22222222022222202bbbbbb2611111166ccacac6644654460088800000760000007670000070670000000000040ffe000f0ffe00040ffe00040fff0000ffffe0
-00002220022222202bbbbbb2611111166cccccc6655665560000000000700000007000000070000000000000f04ff000004ff000400ff000f04ff000400fff00
-00002200002222002bbbbbb2611111166cccccc664456446000000000070000000700000007000000000000000000000040000000f0000000000000004ff0000
-000000000002200022222222611111166cccccc66556655600000000007000000070000000700000000000000000000000000000000000000000000000000000
+0000000000066000aaa9aaa9006666000066660000666600e0e00000000000000000000000000000000000000000000000000000000000000000040400000000
+000066000006600029aaa2a20611116006ccac60065665600800000000707700007007000070000000000000000040400000404000004040000007f700004040
+00006660000660002bbbbbb2611111166ccacac66445644608000000007677000076770000767700000000000040fff00040fff00040fff00000717100000fff
+66666666000660002bbbbbb2611111166cccaca6655665560800080000767700007677000076770000000000000f1f10000f1f10000f1f100040f7e70400f1f1
+55556665066666602bbbbbb2611111166ccacac6644654460088800000760000007670000070670000000000040ffe000f0ffe00040ffe00040fff0000ffffe0
+00006650056666502bbbbbb2611111166cccccc6655665560000000000700000007000000070000000000000f04ff000004ff000400ff000f04ff000400fff00
+00005500005665002bbbbbb2611111166cccccc664456446000000000070000000700000007000000000000000000000040000000f0000000000000004ff0000
+000000000005500022222222611111166cccccc66556655600000000007000000070000000700000000000000000000000000000000000000000000000000000
 00033000000880000008800000022000000220000002200000022000000220000008800000000000000000000000000000000000000000000000000000000000
 00333300002882000022880000228800002228000022220000822200008822000088220000000000000404000004040000040400000404000000000000000000
 003333000022220000222800002288000022880000288200008822000088220000822200041f14f000f1f0000000fff00000fff00000fff00000000000000000
