@@ -786,7 +786,7 @@ function initlevels()
  -- find the enterance 
  lvls={
   --factory external
-  {xmap=6,ymap=2,w=1,h=1},
+  --{xmap=6,ymap=2,w=1,h=1},
   --mover hooks
   --{xmap=3,ymap=0,w=1,h=1},
   --mover hooks 2
@@ -795,7 +795,7 @@ function initlevels()
   --slows tutorial
   --{xmap=6,ymap=0,w=1,h=1},
   --polly art test
-  {xmap=6,ymap=1,w=2,h=1},
+  --{xmap=6,ymap=1,w=2,h=1},
   --wide level bunkers
   --{xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
