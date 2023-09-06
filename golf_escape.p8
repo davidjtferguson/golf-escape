@@ -66,33 +66,10 @@ function _init()
   points={}
  }
  
- --check map and convert
- -- to game objects
+ --game object tables
  bumpers={}
- for x=0,127 do
-  for y=0,63 do
-   --defo overkill
-   if checkflag(x,y,0) and
-      checkflag(x,y,4) and
-      checkflag(x,y,5) and
-      checkflag(x,y,6) and
-      checkflag(x,y,7) then
-    createbumper(x,y)
-    mset(x,y,0)
-   end
-  end
- end
- 
  hooks={}
- for x=0,127 do
-  for y=0,63 do
-   if checkflag(x,y,3) then
-    createhook(x,y)
-    mset(x,y,0)
-   end
-  end
- end
-
+ 
  initlevels()
  
  --stats for end screen
@@ -279,73 +256,73 @@ function updateplaying()
  -- update hooks
  for h in all(hooks) do
   if h.avon then
-	 if anycol(av,h.xvel,h.yvel,0) then
-	  hookreleaseav(av.hook)
-	  resetswing()
-	 elseif h.typ=="moveon" then
-	  h.x+=h.xvel
-	  h.y+=h.yvel
+	  if anycol(av,h.xvel,h.yvel,0) then
+	   hookreleaseav(av.hook)
+	   resetswing()
+	  elseif h.typ=="moveon" then
+	   h.x+=h.xvel
+	   h.y+=h.yvel
+	  end
 	 end
-	end
-	
- if h.typ=="mover" then
-	 h.x+=h.xvel
-	 h.y+=h.yvel
- end
 
- for b in all(bumpers) do
-  --'bounce' the other way
-  if circlecollision(b,h) then
-   h.xvel*=-1
-   h.yvel*=-1
+  if h.typ=="mover" then
+   h.x+=h.xvel
+   h.y+=h.yvel
+  end
+
+  for b in all(bumpers) do
+   --'bounce' the other way
+   if circlecollision(b,h) then
+    h.xvel*=-1
+    h.yvel*=-1
    
-   if h.typ=="moveon" then
-    if h.s<37 then
-     h.s+=4
-    else
-     h.s-=4
+    if h.typ=="moveon" then
+     if h.s<37 then
+      h.s+=4
+     else
+      h.s-=4
+     end
     end
-   end
 
-   if h.typ=="mover" then
-    if h.s<53 then
-     h.s+=4
-    else
-     h.s-=4
+    if h.typ=="mover" then
+     if h.s<53 then
+      h.s+=4
+     else
+      h.s-=4
+     end
     end
    end
   end
+
+  if circlecollision(av,h) and
+     h.active then
+   --todo:sfx for land on hook
+   --just use normal land?
+   
+   av.x=h.x+h.r
+   av.y=h.y+h.r+pixel
+    
+   av.xvel=0
+   av.yvel=0
+
+   av.colstate="hook"
+    
+   av.canswing=true
+    
+   h.avon=true
+    
+   if av.hook!=nil and
+      h!=av.hook then
+    --move to new hook
+    hookreleaseav(av.hook)
+   end
+    
+  av.hook=h
+  elseif not circlecollision(av,h) and
+          h.active==false then
+   h.active=true
+  end
  end
-
- if circlecollision(av,h) and
-   h.active then
-  --todo:sfx for land on hook
-  --just use normal land?
-  
-	 av.x=h.x+h.r
-	 av.y=h.y+h.r+pixel
-	  
-	 av.xvel=0
-	 av.yvel=0
-
-	 av.colstate="hook"
-	  
-	 av.canswing=true
-	  
-	 h.avon=true
-	  
-	 if av.hook!=nil and
-	    h!=av.hook then
-	  --move to new hook
-	  hookreleaseav(av.hook)
-	 end
-	  
-	 av.hook=h
-	 elseif not circlecollision(av,h) and
-	        h.active==false then
-	  h.active=true
-	 end
-	end
  
  --spikes
  if anycol(av.hurtbox,0,0,4) then
@@ -1062,6 +1039,12 @@ function nextlevel()
   return
  end
  
+ --delete previous level's game objects
+ -- (this means no going back levels
+ -- since the game object level data is deleted)
+ bumpers={}
+ hooks={}
+ 
  currlvl=lvls[lvls.currlvlno]
  
  currlvl.haskey=false
@@ -1070,6 +1053,21 @@ function nextlevel()
  for x=(16*currlvl.xmap),(16*currlvl.xmap)+(16*currlvl.w) do
   for y=(16*currlvl.ymap),(16*currlvl.ymap)+(16*currlvl.h) do
 
+		 --load this lvls bumpers and hooks
+		 if checkflag(x,y,0) and
+		    checkflag(x,y,4) and
+		    checkflag(x,y,5) and
+		    checkflag(x,y,6) and
+		    checkflag(x,y,7) then
+		  createbumper(x,y)
+		  mset(x,y,0)
+		 end
+		 
+		 if checkflag(x,y,3) then
+		  createhook(x,y)
+		  mset(x,y,0)
+		 end
+		 
    if checkflag(x,y,1) and
       checkflag(x,y,7) then
     --found spawn
@@ -1077,11 +1075,6 @@ function nextlevel()
     ycp=y
     
     resetav()
-    
-    --todo:make some sort of
-    -- initial spawn point
-    -- that won't overwrite
-    -- with flag
    end
    
    if checkflag(x,y,4) and
@@ -1382,6 +1375,7 @@ function updateaim()
   yvel=av.yvel,
   h=av.h,
   w=av.w,
+  r=av.r,
   points={},
   hitdeath=false,
  }
@@ -1394,36 +1388,41 @@ function updateaim()
   --move a couple frames first
   -- so we're not drawing
   -- over our av.
-  --todo:tidy
   updatemovement(aim)
   aim.yvel+=gravity
   
   updatemovement(aim)
   aim.yvel+=gravity
-	  
+
 	 while wallhit==false do
 		 local point={
 		  x=aim.x,
 		  y=aim.y,
 		 }
-		 
-		add(aim.points,point)
-	 
-	  updatemovement(aim)
-	  
-	  aim.yvel+=gravity
-	  
-    resethurtbox(aim)
 
-    if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
-     wallhit=true
-     aim.hitdeath=true
-    end
+   add(aim.points,point)
+   
+   updatemovement(aim)
+    
+   aim.yvel+=gravity
+    
+   resethurtbox(aim)
+
+   if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
+    wallhit=true
+    aim.hitdeath=true
+   end
 
 	  if anycol(aim,aim.xvel,aim.yvel,0)
 	     or #aim.points>100 then
 	   wallhit=true
 	  end
+   
+   for h in all(hooks) do
+    if circlecollision(aim,h) then
+     wallhit=true
+    end
+   end
 	 end
  end
 end
