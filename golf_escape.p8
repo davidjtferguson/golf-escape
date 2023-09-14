@@ -84,8 +84,10 @@ function _update60()
 end
 
 function updateplaying()
- updateplaytime()
- 
+ if currentupdate!=updateending then
+  updateplaytime()
+ end
+
  updatebackgrounds()
  updatecamera()
 
@@ -96,100 +98,8 @@ function updateplaying()
  updateaim()
 
  --collision
-
- --ground col
- if groundcol(av,0,av.yvel,0) then
-  moveavtoground()
-  
-  --if vel low enough, land
-  if groundcol(av,0,av.yvel,6) or
-     abs(av.yvel)<0.075 then
-
-   if av.colstate!="ground" then
-    local cols=avcolours
-
-    if groundcol(av,0,av.yvel,6) then
-     cols=sandcolours
-    end
-
-    collisionimpact(av.x+(av.w/2),av.y+av.h,
-     1,-0.25,false,cols)
-
-    sfx(8)
-   end
-   
-   av.colstate="ground"  
-   
-	  av.xvel=0
-	  av.yvel=0
-	  
-	  av.canswing=true
-	
-	  --tredmills
-	  if groundcol(av,0,av.yvel,1) then
-	   av.xvel+=treadmillspeed
-	  end
-
-	  if groundcol(av,0,av.yvel,2) then
-	   av.xvel-=treadmillspeed
-	  end
-  else --bounce
-   av.xvel*=xbouncefrac
-   av.yvel*=ybouncefrac
-
-   av.pauseanim="gsquish"
-   
-   collisionimpact(av.x+(av.w/2),av.y+av.h,
-	   1,-0.25,false,avcolours)
-  end
- else
-  if av.slowstate=="in" then
-   av.yvel+=gravity*slowfrac
-  else
-   av.yvel+=gravity
-  
-   av.colstate="air"
-   av.canswing=false
-  end
- end
- 
- --other sides col
- if not groundcol(av,0,av.yvel,0) then
-	 if topcol(av,0,av.yvel,0) then
-	  moveavtoroof()
-	  av.yvel*=-1
-	  
-	  av.pauseanim="tsquish"
-
-	  collisionimpact(av.x+(av.w/2),av.y,
-	   1,0.25,false,avcolours)
-	 elseif leftcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="lsquish"
-
-	  collisionimpact(av.x,av.y+(av.h/2),
-	   0.25,1,true,avcolours)
-
-	  moveavtoleft()
-   sidebounce()
-	 elseif rightcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="rsquish"
-	  
-	  collisionimpact(av.x+av.w,av.y+(av.h/2),
-	   -0.75,1,true,avcolours)
-
-	  moveavtoright()
-   sidebounce()
-	 end
-	else --on ground
-	 if allleftcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
-	  av.xvel=0
-	 end
- 
-	 if allrightcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
-	  av.xvel=0
-	 end
+ if currentupdate!=updateending then
+  avwallscollision()
  end
 
  --game obj update
@@ -358,7 +268,9 @@ function updateplaying()
   currlvl.key.xflip=av.xflip
  end
 
- updateav()
+ if currentupdate!=updateending then
+  updateav()
+ end
 
  updateanims()
  
@@ -433,6 +345,102 @@ function handleswinginput()
  end
 end
 
+function avwallscollision()
+ if groundcol(av,0,av.yvel,0) then
+  moveavtoground()
+  
+  --if vel low enough, land
+  if groundcol(av,0,av.yvel,6) or
+     abs(av.yvel)<0.075 then
+
+   if av.colstate!="ground" then
+    local cols=avcolours
+
+    if groundcol(av,0,av.yvel,6) then
+     cols=sandcolours
+    end
+
+    collisionimpact(av.x+(av.w/2),av.y+av.h,
+     1,-0.25,false,cols)
+
+    sfx(8)
+   end
+   
+   av.colstate="ground"  
+   
+	  av.xvel=0
+	  av.yvel=0
+	  
+	  av.canswing=true
+	
+	  --tredmills
+	  if groundcol(av,0,av.yvel,1) then
+	   av.xvel+=treadmillspeed
+	  end
+
+	  if groundcol(av,0,av.yvel,2) then
+	   av.xvel-=treadmillspeed
+	  end
+  else --bounce
+   av.xvel*=xbouncefrac
+   av.yvel*=ybouncefrac
+
+   av.pauseanim="gsquish"
+   
+   collisionimpact(av.x+(av.w/2),av.y+av.h,
+	   1,-0.25,false,avcolours)
+  end
+ else
+  if av.slowstate=="in" then
+   av.yvel+=gravity*slowfrac
+  else
+   av.yvel+=gravity
+  
+   av.colstate="air"
+   av.canswing=false
+  end
+ end
+ 
+ --other sides col
+ if not groundcol(av,0,av.yvel,0) then
+	 if topcol(av,0,av.yvel,0) then
+	  moveavtoroof()
+	  av.yvel*=-1
+	  
+	  av.pauseanim="tsquish"
+
+	  collisionimpact(av.x+(av.w/2),av.y,
+	   1,0.25,false,avcolours)
+	 elseif leftcol(av,av.xvel,av.yvel,0) then
+	  av.pauseanim="lsquish"
+
+	  collisionimpact(av.x,av.y+(av.h/2),
+	   0.25,1,true,avcolours)
+
+	  moveavtoleft()
+   sidebounce()
+	 elseif rightcol(av,av.xvel,av.yvel,0) then
+	  av.pauseanim="rsquish"
+	  
+	  collisionimpact(av.x+av.w,av.y+(av.h/2),
+	   -0.75,1,true,avcolours)
+
+	  moveavtoright()
+   sidebounce()
+	 end
+	else --on ground
+	 if allleftcol(av,av.xvel,0,0) then
+	  --todo:move av to wall?
+	  av.xvel=0
+	 end
+ 
+	 if allrightcol(av,av.xvel,0,0) then
+	  --todo:move av to wall?
+	  av.xvel=0
+	 end
+ end
+end
+
 function _draw()
  currentdraw()
 
@@ -444,7 +452,12 @@ function drawplaying()
   cls(bg.colour)
  end
 
- drawbackgrounds()
+ --factory external has blue sky
+ if currlvl.xmap==6 and currlvl.ymap==2 then
+  cls(12)
+ else
+  drawbackgrounds()
+ end
 
  --draw all of current level
  map(currlvl.xmap*16,currlvl.ymap*16,currlvl.xmap*128,currlvl.ymap*128,currlvl.w*16,currlvl.h*16)
@@ -454,8 +467,7 @@ function drawplaying()
  -- draw red corners
  -- otherwise,transparent
  -- (pretty overkill to save one sprite, will probably change)
- if currlvl.xmap==6 and currlvl.ymap==2 and
-    currlvl.exit.s==20 then
+ if currlvl.xmap==6 and currlvl.ymap==2 then
   palt(0,false)
   pal(0,8)
  end
@@ -815,7 +827,7 @@ function initlevels()
   --polly art test
   {xmap=6,ymap=1,w=2,h=1},
   --factory external
-  --{xmap=6,ymap=2,w=1,h=1},
+  {xmap=6,ymap=2,w=1,h=1},
   --wide level bunkers
   --{xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
@@ -829,29 +841,29 @@ function initlevels()
   --tall level design tests
   --{xmap=5,ymap=1,w=1,h=2},
   --mover hooks
-  {xmap=3,ymap=0,w=1,h=1},
+  --{xmap=3,ymap=0,w=1,h=1},
   --mover hooks 2
-  {xmap=4,ymap=0,w=2,h=1},
+  --{xmap=4,ymap=0,w=2,h=1},
   --hook maze
-  {xmap=0,ymap=3,w=1,h=1},
+  --{xmap=0,ymap=3,w=1,h=1},
   --art test
   --{xmap=0,ymap=0,w=3,h=1},
   --hooks and slows
-  {xmap=0,ymap=2,w=1,h=1},
+  --{xmap=0,ymap=2,w=1,h=1},
   --wide slows
-  {xmap=0,ymap=1,w=2,h=1},
+  --{xmap=0,ymap=1,w=2,h=1},
   --climb upwards slows
-  {xmap=1,ymap=2,w=1,h=1},
+  --{xmap=1,ymap=2,w=1,h=1},
   --moving hooks
-  {xmap=1,ymap=3,w=1,h=1},
+  --{xmap=1,ymap=3,w=1,h=1},
   --static swing power test
-  {xmap=2,ymap=3,w=1,h=1},
+  --{xmap=2,ymap=3,w=1,h=1},
   --convayer belts
-  {xmap=3,ymap=3,w=1,h=1},
+  --{xmap=3,ymap=3,w=1,h=1},
   --important plob level
-  {xmap=4,ymap=3,w=1,h=1},
+  --{xmap=4,ymap=3,w=1,h=1},
   --out of way key
-  {xmap=7,ymap=2,w=1,h=1},
+  --{xmap=7,ymap=2,w=1,h=1},
  }
  
  --change to set starting lvl
@@ -1760,7 +1772,11 @@ function inittransition()
  currentupdate=updatetransition
  currentdraw=drawtransition
 
- transition={
+ transition=resettransition()
+end
+
+function resettransition()
+ local t={
   phase=0,
   
   cir={
@@ -1771,6 +1787,7 @@ function inittransition()
    speed=5
   }
  }
+ return t
 end
 
 function updatetransition()
@@ -1781,19 +1798,14 @@ function updatetransition()
  if transition.cir.r>160 and transition.phase==0 then
   --screen is black - switch
 
-  nextlevel()
   av.dancing=false
+  nextlevel()
 
   --now bring screen back in
+  transition=resettransition()
+
   transition.phase=1
   
-  transition.cir={
-   x=64,
-   y=0,
-   r=5,
-   c=0,
-   speed=5
-  }
  end
 
  if transition.cir.r>160 and transition.phase==1 then
@@ -1849,9 +1861,28 @@ function initending()
  
  currentupdate=updateending
  currentdraw=drawending
+
+ --factory external
+ currlvl.xmap=6
+ currlvl.ymap=2
+ currlvl.w=1
+ currlvl.h=1
+ currlvl.haskey=false
+ currlvl.exit.s=20
+ 
+ av.x=(currlvl.xmap*16)+8
+ av.y=(currlvl.ymap*16)+15
+ av.dancing=true
+
+ --todo:init and update
+ -- white circle expanding
+ -- perhaps multiple circles expanding
+ --
 end
 
 function updateending()
+ updateplaying()
+
  if ycredits<32 then
   ycredits+=0.25
  end
@@ -2140,7 +2171,7 @@ __gfx__
 1000101000d500000000d50000020010100000000000000000000077777777101000000000000000000000000000000000000000000000000000202020000010
 10000000000000000000000000000010100000f40000000000000000900000100000009696969696969696969600000025000000000000052500000044545410
 1000101000d500000000d50000000010100000000000000000000077777777101000000000000000000000000000000000000000000000000000000000000010
-1000000000000000000000000000001010000000f400000000000000000000109431009696969696519696969600a40025000000000000052600000000000010
+1000000000000000000000000000001010000000f400000000000000000000109431009696969696419696969600a40025000000000000052600000000000010
 1000000000d500000000d50000000010105100310000d5d5d5d5d5d5d5d5d5101000000000000000000000000000000000000000000000000000000000000010
 1000000000000000000000510000001010000000000000000000006000000010959595959595959595959595959595952500003100000005e500000041000010
 10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010
@@ -2339,7 +2370,7 @@ __map__
 5d7d7d7d7d7d6d6d6d6d6e00000000010100000000000000004c4d4d4d4d4d010100007c5e00000000000000000000000000000000000000006f000000000050010000000000000000000000000000010100004f000000000000000000000001525e004000420000000000000000000000000000640073000000730000000050
 010000000000000000000000000000010101010101000000006c6d6d6d6d5d01010000007f0000000000000000000000005f000000060000005c7d7d7e0000500100000000000000000000000000000101000000000000000000000000000001526e005051520000000000000000004300000000000000000000000000000050
 0100000000000000000000000000000101000000000000000066680066685c0101000000000000000000000000000000006f000047715700006f00000000005001000000000000000000000000000001010000000000000000000000000000015200006000620000000000000000000000000000000000000000000000000050
-010000000000000000005f6667685f0101000000000000000076780976785c0101000000000000060000005f00474746006f00006f000000006f005f0015005001000000000000000000000009000001010000000000000000000000000000015200000000000000000000000000000000000047470057570048480058580050
+010000000000000000005f6667685f0101000000000000000076780976785c0101000000000000060000005f00474746006f00006f000000006f005f0015005001000000000000000000000009000001010000000000000000000000000000015200000000000009000000000000000000000047470057570048480058580050
 010000000000000000006f7677786f0101000000000000000074790074795c01014747465f0047474600006f00006f00006f00006f005f00006f005c4771577b01000000000000000000000202020001010000000000000000000001010101015200000000000000000000000000000000000000000000000000000000000050
 010000130000000000006f7475796f0101000015000000004c4d4d4d4d4d5d01010000006f00006f00004c5d4e006f004c5d4e006f4c5e004c5d4d5d7b7b5d7b01000000000000000000000000000001010000000000000001000000000000015200000000001300150000000000000000000000000000000000000000000050
 010101010101010101015d4d4d4d5d0101010101010101010101010101010101014d4d4d5d4d4d5d4d4d5d7b5d4d5d4d5d7b5d4d5d5d5d4d5d7b7b7b5d5d7b5d01000000000000000200000000000001010000000000000001000000000000015171717171717171717171717171717171717171717171717171717171717151
