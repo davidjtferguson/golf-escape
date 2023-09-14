@@ -30,6 +30,8 @@ function _init()
  
  --vars
 
+ pausecontrols=false
+
  --checkpoint
  xcp=0
  ycp=0
@@ -87,70 +89,8 @@ function updateplaying()
  updatebackgrounds()
  updatecamera()
 
- -- swing controls
- if av.canswing then
-  --rotate angle
-  if btn(⬅️) then
-   rotacc(1)
-  elseif btn(➡️) then
-   rotacc(-1)
-  else
-   --reset vel
-   swing.currrotangle=swing.lowrotangle
-  end
-
-  --power boost swing
-  if btnp(❎) then
-   swing.currdecaypause=swing.decaypause
-   swing.force+=swing.btnf
-   
-   swing.decay=swing.basedecay
-   
-   if swing.force>swing.highf then
-    swing.force=swing.highf
-   end
-
-   av.pauseanim="boost"
-   av.animpause=10
-   resetanimt(av.anim)
-  end
-  
-  --release swing
-  if btnp(🅾️) then
-   sfx(1)
-   
-   swingcount+=1
-  
-   cam.free=false
-  
-   applyswing(av)
-
-   resetswing()
-    
-   if av.slowstate=="in" then
-    av.slowstate="escape"
-   end
-
-   if av.colstate=="hook" then
-    hookreleaseav(av.hook)
-   end
-  end
-  
-  if swing.currdecaypause==0 and
-     swing.force>swing.lowf then
-   
-   swing.decay+=swing.decayvel
-   
-   swing.force-=swing.decay
-  end
-  
-  if swing.currdecaypause>0 then
-   swing.currdecaypause-=1
-  end
-  
-  if swing.force<swing.lowf then
-   swing.force=swing.lowf
-  end
+ if not pausecontrols then
+  handleswinginput()
  end
  
  updateaim()
@@ -256,7 +196,8 @@ function updateplaying()
  -- update hooks
  for h in all(hooks) do
   if h.avon then
-	  if anycol(av,h.xvel,h.yvel,0) then
+	  if anycol(av,h.xvel,h.yvel,0) and
+       currentupdate==updateplaying then
 	   hookreleaseav(av.hook)
 	   resetswing()
 	  elseif h.typ=="moveon" then
@@ -295,7 +236,8 @@ function updateplaying()
   end
 
   if circlecollision(av,h) and
-     h.active then
+     h.active and
+     currentupdate==updateplaying then
    --todo:sfx for land on hook
    --just use normal land?
    
@@ -385,8 +327,9 @@ function updateplaying()
  if circlecollision(av,currlvl.exit) and
     (not currlvl.haskey or
      currlvl.key.collected) and
-    av.colstate=="ground" then
-  nextlevel()
+    av.colstate=="ground" and
+    currentupdate==updateplaying then
+  initlvlend()
  end
 
  if currlvl.haskey and
@@ -422,6 +365,74 @@ function updateplaying()
  updateparticleeffects() --tab 6
 end
 
+function handleswinginput()
+ -- swing controls
+ if av.canswing then
+  --rotate angle
+  if btn(⬅️) then
+   rotacc(1)
+  elseif btn(➡️) then
+   rotacc(-1)
+  else
+   --reset vel
+   swing.currrotangle=swing.lowrotangle
+  end
+
+  --power boost swing
+  if btnp(❎) then
+   swing.currdecaypause=swing.decaypause
+   swing.force+=swing.btnf
+   
+   swing.decay=swing.basedecay
+   
+   if swing.force>swing.highf then
+    swing.force=swing.highf
+   end
+
+   av.pauseanim="boost"
+   av.animpause=10
+   resetanimt(av.anim)
+  end
+  
+  --release swing
+  if btnp(🅾️) then
+   sfx(1)
+   
+   swingcount+=1
+  
+   cam.free=false
+  
+   applyswing(av)
+
+   resetswing()
+    
+   if av.slowstate=="in" then
+    av.slowstate="escape"
+   end
+
+   if av.colstate=="hook" then
+    hookreleaseav(av.hook)
+   end
+  end
+  
+  if swing.currdecaypause==0 and
+     swing.force>swing.lowf then
+   
+   swing.decay+=swing.decayvel
+   
+   swing.force-=swing.decay
+  end
+  
+  if swing.currdecaypause>0 then
+   swing.currdecaypause-=1
+  end
+  
+  if swing.force<swing.lowf then
+   swing.force=swing.lowf
+  end
+ end
+end
+
 function _draw()
  currentdraw()
 
@@ -429,8 +440,10 @@ function _draw()
 end
 
 function drawplaying()
- cls(bg.colour)
- 
+ if currentdraw!=drawtransition then
+  cls(bg.colour)
+ end
+
  drawbackgrounds()
 
  --draw all of current level
@@ -449,7 +462,7 @@ function drawplaying()
  
  drawobj(currlvl.exit)
  
-  pal()
+ pal()
  
  if currlvl.haskey then
   spr(currlvl.key.anim.sprite,
@@ -474,7 +487,7 @@ function drawplaying()
   --circ((h.x+h.xcenoff)*8,(h.y+h.ycenoff)*8,h.r*8)
  end
 
- if av.canswing then
+ if av.canswing and not av.dancing then
   --draw aim
   
   linecol=13
@@ -800,7 +813,7 @@ function initlevels()
   --float zone test
   --{xmap=7,ymap=0,w=1,h=1},
   --polly art test
-  --{xmap=6,ymap=1,w=2,h=1},
+  {xmap=6,ymap=1,w=2,h=1},
   --factory external
   --{xmap=6,ymap=2,w=1,h=1},
   --wide level bunkers
@@ -876,6 +889,8 @@ function resetav()
   
   xflip=false,
   yflip=false,
+
+  dancing=false,
  }
  
  resethurtbox(av)
@@ -1201,61 +1216,63 @@ function updatecamera()
   cam.yfree=movetopoint(cam.yfree,cam.y)
 	end
 
- if btn(⬆️) and cam.canmove and av.canswing then
-  cam.free=true
+ if not pausecontrols then
+  if btn(⬆️) and cam.canmove and av.canswing then
+   cam.free=true
+   
+   if cam.freedirect=="none" then
+    cam.freedirect="up"
+   end
+
+   if currlvl.w>1 then
+    --todo:have short accel
+    cam.xfree-=cammovespeed
+    
+    if cam.xfree<cam.x and cam.freedirect=="down" then
+     cam.free=false
+     cam.canmove=false
+     cam.freedirect="none"
+    end
+   elseif currlvl.h>1 then
+    cam.yfree-=cammovespeed
+    
+    if cam.yfree<cam.y and cam.freedirect=="down" then
+     cam.free=false
+     cam.canmove=false
+     cam.freedirect="none"
+    end
+   end
+  end
   
-  if cam.freedirect=="none" then
-		 cam.freedirect="up"
-		end
+  if btn(⬇️) and cam.canmove and av.canswing then
+   cam.free=true
 
-  if currlvl.w>1 then
-   --todo:have short accel
-   cam.xfree-=cammovespeed
-   
-   if cam.xfree<cam.x and cam.freedirect=="down" then
-    cam.free=false
-    cam.canmove=false
-				cam.freedirect="none"
+   if cam.freedirect=="none" then
+    cam.freedirect="down"
    end
-  elseif currlvl.h>1 then
-   cam.yfree-=cammovespeed
-   
-   if cam.yfree<cam.y and cam.freedirect=="down" then
-	   cam.free=false
-	   cam.canmove=false
-				cam.freedirect="none"
-	  end
-  end
- end
- 
- if btn(⬇️) and cam.canmove and av.canswing then
-  cam.free=true
 
-  if cam.freedirect=="none" then
-		 cam.freedirect="down"
-		end
-
-  if currlvl.w>1 then
-   cam.xfree+=cammovespeed
-   
-   if cam.xfree>cam.x and cam.freedirect=="up" then
-    cam.free=false
-    cam.canmove=false
-				cam.freedirect="none"
+   if currlvl.w>1 then
+    cam.xfree+=cammovespeed
+    
+    if cam.xfree>cam.x and cam.freedirect=="up" then
+     cam.free=false
+     cam.canmove=false
+     cam.freedirect="none"
+    end
+   elseif currlvl.h>1 then
+    cam.yfree+=cammovespeed
+    
+    if cam.yfree>cam.y and cam.freedirect=="up" then
+     cam.free=false
+     cam.canmove=false
+     cam.freedirect="none"
+    end
    end
-  elseif currlvl.h>1 then
-   cam.yfree+=cammovespeed
-   
-   if cam.yfree>cam.y and cam.freedirect=="up" then
-	   cam.free=false
-	   cam.canmove=false
-				cam.freedirect="none"
-	  end
   end
- end
 
- if not cam.canmove and not btn(⬆️) and not btn(⬇️) then
-  cam.canmove=true
+  if not cam.canmove and not btn(⬆️) and not btn(⬇️) then
+   cam.canmove=true
+  end
  end
 
  --todo:call camera1dbounds less? tidy, maybe renaming
@@ -1555,13 +1572,6 @@ function avanimfind(t)
  t.sprites=2
  t.speed=19
 
- --victory dance
- --[[
- t.basesprite=12
- t.sprites=4
- t.speed=15
- ]]
- 
  --flying through air
  if av.colstate!="ground" then
   t.basesprite=60
@@ -1653,6 +1663,12 @@ function avanimfind(t)
   t.sprites=2
   t.speed=5
  end
+ 
+ if av.dancing then
+	 t.basesprite=12
+	 t.sprites=4
+	 t.speed=15
+ end 
 end
 
 function makeanimt(bs,sd,sprs)
@@ -1718,7 +1734,115 @@ function drawbackgrounds()
 end
 
 -->8
--- ending state
+-- transition and ending state
+
+function initlvlend()
+ currentupdate=updatelvlend
+ currentdraw=drawlvlend
+
+ pausecontrols=true
+ av.dancing=true
+end
+
+function updatelvlend()
+ updateplaying()
+
+ if btnp(🅾️) then
+  inittransition()
+ end
+end
+
+function drawlvlend()
+ drawplaying()
+end
+
+function inittransition()
+ currentupdate=updatetransition
+ currentdraw=drawtransition
+
+ transition={
+  phase=0,
+  
+  cir={
+   x=64,
+   y=0,
+   r=5,
+   c=0,
+   speed=5
+  }
+ }
+end
+
+function updatetransition()
+ updateplaying()
+
+ transition.cir.r+=transition.cir.speed
+ 
+ if transition.cir.r>160 and transition.phase==0 then
+  --screen is black - switch
+
+  nextlevel()
+  av.dancing=false
+
+  --now bring screen back in
+  transition.phase=1
+  
+  transition.cir={
+   x=64,
+   y=0,
+   r=5,
+   c=0,
+   speed=5
+  }
+ end
+
+ if transition.cir.r>160 and transition.phase==1 then
+  --screen is back up - move to playing
+
+  currentupdate=updateplaying
+  currentdraw=drawplaying
+  pausecontrols=false
+ end
+end
+
+function drawtransition()
+ cls()
+
+ if transition.phase==0 then
+  drawplaying()
+
+  circfill((cam.x*128)+transition.cir.x,(cam.y*128)+transition.cir.y,transition.cir.r,transition.cir.c)
+ elseif transition.phase==1 then
+  --less itterations than i'd like
+  -- because of performance issues
+  for i=0.5,0.75,0.05 do
+  
+   local x=transition.cir.x+transition.cir.r*cos(i)
+   local y=transition.cir.y+transition.cir.r*sin(i)
+
+   local xbit=transition.cir.x-x
+   local ybit=transition.cir.y-y
+   
+   --slightly random number
+   -- prevents unneeded extra draws
+   -- once width is past edges
+
+   if xbit*2<200 then
+   
+    clip(x,transition.cir.y,xbit*2,-ybit)
+
+    drawplaying()
+   
+    clip()
+   
+    --does drop below 60
+    -- would be good to improve
+    -- performance
+    --debug=stat(7)..".."..x..".."..transition.cir.y..".."..(xbit*2)..".."..-ybit
+   end
+  end
+ end
+end
 
 function initending()
  ycredits=-64
@@ -2212,12 +2336,12 @@ __map__
 5e666768000000000000000000005c0101000000000000000000006667676801016e00004c5e00004457574d6d57020247015d7d7e007c7d6d5e000000000050010000000000000000000000000000010100000000000000000000000000000152005f0000000000000000000000000044454600000000000000000000000050
 5e767778000000000028000027005c0101000000000000000000007677777801010000005c5e00006c6d6d5e000000006c6d6e0000000000006f00000000005001000101001300000000000000000001014f000000000000000000000000000152007f0000007c7d7e0000000000000000000000000000000054455600000050
 5e7475790000010101014e0000006c0101000000000000000000007475757901010000005c6d7d7e0000007f000000000000000000000000005c7d7e00007c010100000101010100000000000000000101004f00000000000000000000000001524e00000000000000000000004f000000000000000065000060516200000050
-5d7d7d7d7d7d6d6d6d6d6e00000000010100000000000000004c4d4d4d4d4d010100007c5e00000000000000000000000000000000000000006f000000000050010000000000000000000000000000010100004f000000000000000000000001525e004000420000000009000000000000000000640073000000730000000050
+5d7d7d7d7d7d6d6d6d6d6e00000000010100000000000000004c4d4d4d4d4d010100007c5e00000000000000000000000000000000000000006f000000000050010000000000000000000000000000010100004f000000000000000000000001525e004000420000000000000000000000000000640073000000730000000050
 010000000000000000000000000000010101010101000000006c6d6d6d6d5d01010000007f0000000000000000000000005f000000060000005c7d7d7e0000500100000000000000000000000000000101000000000000000000000000000001526e005051520000000000000000004300000000000000000000000000000050
 0100000000000000000000000000000101000000000000000066680066685c0101000000000000000000000000000000006f000047715700006f00000000005001000000000000000000000000000001010000000000000000000000000000015200006000620000000000000000000000000000000000000000000000000050
 010000000000000000005f6667685f0101000000000000000076780976785c0101000000000000060000005f00474746006f00006f000000006f005f0015005001000000000000000000000009000001010000000000000000000000000000015200000000000000000000000000000000000047470057570048480058580050
 010000000000000000006f7677786f0101000000000000000074790074795c01014747465f0047474600006f00006f00006f00006f005f00006f005c4771577b01000000000000000000000202020001010000000000000000000001010101015200000000000000000000000000000000000000000000000000000000000050
-010000130000000000006f7475796f0101000015000000004c4d4d4d4d4d5d01010000006f00006f00004c5d4e006f004c5d4e006f4c5e004c5d4d5d7b7b5d7b01000000000000000000000000000001010000000000000001000000000000015200000000001300000000000000000000000000000000000015000000000050
+010000130000000000006f7475796f0101000015000000004c4d4d4d4d4d5d01010000006f00006f00004c5d4e006f004c5d4e006f4c5e004c5d4d5d7b7b5d7b01000000000000000000000000000001010000000000000001000000000000015200000000001300150000000000000000000000000000000000000000000050
 010101010101010101015d4d4d4d5d0101010101010101010101010101010101014d4d4d5d4d4d5d4d4d5d7b5d4d5d4d5d7b5d4d5d5d5d4d5d7b7b7b5d5d7b5d01000000000000000200000000000001010000000000000001000000000000015171717171717171717171717171717171717171717171717171717171717151
 __sfx__
 050400003374328723107150070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703
