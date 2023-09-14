@@ -23,7 +23,7 @@ function _update60()
   cir.r-=cir.speed
  end
  
- if cir.r>150 then
+ if cir.r>160 then
   cir.grow=false
  elseif cir.r<1 then
   cir.grow=true
@@ -39,7 +39,7 @@ function _draw()
 -- local x=cir.x+cir.r*cos(angle)
 -- local y=cir.y+cir.r*sin(angleinradians)
 
- for i=0.5,0.75,0.02 do
+ for i=0.5,0.75,0.015 do
  
   --i=0.6
   
@@ -51,14 +51,24 @@ function _draw()
   local xbit=cir.x-x
   local ybit=cir.y-y
   
+  --slightly random number
+  -- prevents unneeded extra draws
+  -- once width is past edges
+  if xbit*2<156 then
+  
   --pset(cir.x+xbit,y,8)
     
-  clip(x,cir.y,xbit*2,-ybit)
+   clip(x,cir.y,xbit*2,-ybit)
 
-  map(0,0,0,0,16,16)
+   map(0,0,0,0,16,16)
   
-  clip()
+   clip()
+  end
+  
  end 
+ 
+ print(stat(7),0,0)
+
 end
 __gfx__
 00000000aaa999990000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
