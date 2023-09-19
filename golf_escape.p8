@@ -829,7 +829,7 @@ function initlevels()
   --factory external
   --{xmap=6,ymap=2,w=1,h=1},
   --wide level bunkers
-  {xmap=2,ymap=1,w=2,h=1},
+  --{xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
   --{xmap=2,ymap=2,w=2,h=1},
   --extra wide level golf course
@@ -1875,13 +1875,17 @@ function initending()
  av.dancing=true
 
  --todo:init and update
- -- white circle expanding
- -- perhaps multiple circles expanding
- --
+ -- go through greyscale colours expanding from top
+ -- until on white, then initfade
+ initfade(currlvl.xmap*16,currlvl.ymap*16,7)
 end
 
 function updateending()
  updateplaying()
+
+ if #effects>0 then
+  return
+ end
 
  if ycredits<32 then
   ycredits+=0.25
@@ -1970,14 +1974,15 @@ function createeffect(update)
  return e
 end
 
-function createparticle(x,y,xvel,yvel,r,col)
+function createparticle(x,y,xvel,yvel,r,col,decreasestep)
  p={
   x=x,
   y=y,
   xvel=xvel,
   yvel=yvel,
   r=r,
-  col=col
+  col=col,
+  decreasestep=decreasestep
  }
  return p
 end
@@ -2017,7 +2022,8 @@ function initdustkick(x,y,dx,dy,rdx,rdy,no,minlength,cols,front,radius)
    x*8,
    y*8,
    dx+lrdx,dy+rnd(rdy),
-   0+flr(rnd(radius)),col)
+   0+flr(rnd(radius)),col,
+   2+rnd(5))
   
   p.timeout=minlength+rnd(5)
   add(e.particles,p)
@@ -2033,8 +2039,8 @@ function updatedustkick(e)
   
   if p.timeout<=0 then
    if p.r>0 then
-    p.r=0
-    p.timeout=5
+    p.r-=1
+    p.timeout=p.decreasestep
    else
     del(e.particles,p)
    end
@@ -2079,6 +2085,32 @@ function feetpos()
   return av.x,av.y+av.h
  end
 end
+
+--TODO:use for opening cutscene
+-- after entering factory, in from black
+function initfade(x,y,col)
+ local e=createeffect(updatedustkick)
+ e.front=true
+
+ --create a bunch of particles
+ for i=-1,16 do
+  for j=-1,16 do
+  
+   local lrdx=i+rnd(1)
+   local lrdy=j+rnd(1)
+
+   local p=createparticle(
+    (x+lrdx)*8,
+    (y+lrdy)*8,
+    (-0.5+rnd(1))/10,(-0.5+rnd(1))/10,
+    10+rnd(5),col,15+rnd(5))
+   
+   p.timeout=120+rnd(5)
+   add(e.particles,p)
+  end
+ end
+end
+
 __gfx__
 0006600082888288aaa9aaaa000000000000000000000000000000000000000000000000000dd000000dd0000000000000040400004004000040400000400400
 00066000828882889a4a549a00000000000000000000000000702200000000000000000000dddd0000dddd0000000000000ff000000ff000000ff000000ff000
