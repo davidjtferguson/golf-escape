@@ -31,6 +31,7 @@ function _init()
  --vars
 
  pausecontrols=false
+ endingtransition=false
 
  --checkpoint
  xcp=0
@@ -840,15 +841,15 @@ function initlevels()
  -- find the enterance 
  lvls={
   --tutorial
-  {xmap=4,ymap=1,w=1,h=2},
+  --{xmap=4,ymap=1,w=1,h=2},
   --float zone 3x3
-  {xmap=7,ymap=0,w=1,h=1},
+  --{xmap=7,ymap=0,w=1,h=1},
+  --factory external
+  {xmap=6,ymap=2,w=1,h=1},
   --polly art test
   {xmap=6,ymap=1,w=2,h=1},
-  --factory external
-  --{xmap=6,ymap=2,w=1,h=1},
   --wide level bunkers
-  --{xmap=2,ymap=1,w=2,h=1},
+  {xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
   --{xmap=2,ymap=2,w=2,h=1},
   --extra wide level golf course
@@ -1798,7 +1799,7 @@ function updatelvlend()
  updateplaying()
 
  if btnp(🅾️) then
-  inittransition()
+  inittransition({0},backtoplaying)
  end
 end
 
@@ -1806,63 +1807,85 @@ function drawlvlend()
  drawplaying()
 end
 
-function inittransition()
+function inittransition(cols,resumefunc)
  currentupdate=updatetransition
  currentdraw=drawtransition
 
- transition=resettransition()
+ transition=resettransition(cols,resumefunc)
 end
 
-function resettransition()
+function resettransition(cols,resumefunc)
  local t={
-  phase=0,
-  
-  cir={
-   x=64,
-   y=0,
-   r=5,
-   c=0,
-   speed=5
-  }
+  currcol=1,
+  cols=cols,
+  resumefunc=resumefunc,
  }
+ t.cir=resettransitioncir()
  return t
 end
 
+function resettransitioncir()
+ return {
+  x=64,
+  y=0,
+  r=5,
+  speed=5
+ }
+end
+
 function updatetransition()
- updateplaying()
+ if not endingtransition then
+  updateplaying()
+ end
 
  transition.cir.r+=transition.cir.speed
  
- if transition.cir.r>160 and transition.phase==0 then
-  --screen is black - switch
-
-  av.dancing=false
-  nextlevel()
-
-  --now bring screen back in
-  transition=resettransition()
-
-  transition.phase=1
+ --once circle fills screen, move to next currcol
+ if transition.cir.r>160 then
+ 
+  if transition.currcol<=#transition.cols then
+   --move to the next colour
+   transition.cir=resettransitioncir()
+  end
   
- end
+  if transition.currcol==#transition.cols then
+   av.dancing=false
 
- if transition.cir.r>160 and transition.phase==1 then
-  --screen is back up - move to playing
+   if endingtransition then
+    transition.resumefunc()
+    return
+   else
+    nextlevel()
+   end
+  end
+  
+  if transition.currcol>#transition.cols then
+   -- done all colours
+   transition.resumefunc()
+  end
 
-  currentupdate=updateplaying
-  currentdraw=drawplaying
-  pausecontrols=false
+  transition.currcol+=1
  end
 end
 
+function backtoplaying()
+ currentupdate=updateplaying
+ currentdraw=drawplaying
+ pausecontrols=false
+end
+
 function drawtransition()
- cls()
-
- if transition.phase==0 then
+ if transition.currcol==1 then
+  cls()
   drawplaying()
+ end
 
-  circfill((cam.x*128)+transition.cir.x,(cam.y*128)+transition.cir.y,transition.cir.r,transition.cir.c)
- elseif transition.phase==1 then
+ if transition.currcol<=#transition.cols then
+  circfill((cam.x*128)+transition.cir.x,(cam.y*128)+transition.cir.y,transition.cir.r,transition.cols[transition.currcol])
+ else
+  -- circle transition to show screen
+  cls()
+
   --less itterations than i'd like
   -- because of performance issues
   for i=0.5,0.75,0.05 do
@@ -1895,10 +1918,7 @@ function drawtransition()
 end
 
 function initending()
- ycredits=-64
- 
- currentupdate=updateending
- currentdraw=drawending
+ endingtransition=true
 
  --factory external
  currlvl.xmap=6
@@ -1906,16 +1926,30 @@ function initending()
  currlvl.w=1
  currlvl.h=1
  currlvl.haskey=false
+ 
+ --todo:revisit after
+ -- opening cutscene made
  currlvl.exit.s=20
  
  av.x=(currlvl.xmap*16)+8
  av.y=(currlvl.ymap*16)+15
- av.dancing=true
+ 
+ updatecamera()
 
- --todo:init and update
  -- go through greyscale colours expanding from top
  -- until on white, then initfade
+ inittransition({0,5,6,7},backtoending)
+end
+
+function backtoending()
+ ycredits=-64
+ 
+ av.dancing=true
+ 
  initfade(currlvl.xmap*16,currlvl.ymap*16,7)
+ 
+ currentupdate=updateending
+ currentdraw=drawending
 end
 
 function updateending()
@@ -1935,8 +1969,7 @@ function drawending()
  
  --credits
  
- local c1=2
- local c2=11
+ local c1,c2=0,7
  
  s="golf escape"
  outline(s,
@@ -2132,7 +2165,8 @@ function initfade(x,y,col)
     (x+lrdx)*8,
     (y+lrdy)*8,
     (-0.5+rnd(1))/10,(-0.5+rnd(1))/10,
-    10+rnd(5),col,15+rnd(5))
+    10+rnd(5),
+    col,15+rnd(5))
    
    p.timeout=120+rnd(5)
    add(e.particles,p)
@@ -2425,7 +2459,7 @@ __map__
 51000000000000000000000000000000000000000000004c4e00000000000051515e00000000000000000000000000000063000000000000000000000000005052000000000000000000000000000050510015000000000000000000004f00515200767777780000000000000000000000000000000000530000005c5d5e0050
 51000000000051515151515151515100000000060000005c5e00000000000051515e0000005f0000000000005f00000000630000002800005f00000000004c515200000000000000000000001300005051005151001300000000000000004f515200747575790000000006000000000000000000000000630000006c6d6e0050
 5e0000000000515151516d6d6d6d5d51515151515151516d6e00000000000051515e0000006f0000000000006f00001300505600000000005c4d7e00007c6d5152000053000000530000004071717151510000515151510000000000000000515200000000000000007071720000000000000000000000730000000000000050
-5e666768000000000000000000005c5151000000000000000000006667676851516e00004c5e00004457574d6d57454547015d7d7e007c7d6d5e000000000050520000630000005071717151515151515100000000000000000000000000005152005f0000000000000000000000000044454600000000000000000000000050
+5e666768000000000000000000005c5151000000000000000000006667676851516e00004c5e00004457574d6d57454547515d7d7e007c7d6d5e000000000050520000630000005071717151515151515100000000000000000000000000005152005f0000000000000000000000000044454600000000000000000000000050
 5e767778000000000028000027005c5151000000000000000000007677777851510000005c5e00006c6d6d5e000000006c6d6e0000000000006f00000000005052000060717171620000000000006051514f000000000000000000000000005152007f0000007c7d7e0000000000000000000000000000000054455600000050
 5e7475790000515151514e0000006c5151000000000000000000007475757951510000005c6d7d7e0000007f000000000000000000000000005c7d7e00007c515200000000000000000000000000005051004f00000000000000000000000051524e00000000000000000000004f000000000000000065000060516200000050
 5d7d7d7d7d7d6d6d6d6d6e00000000515100000000000000004c4d4d4d4d4d515100007c5e00000000000000000000000000000000000000006f000000000050520000000000000000000000060000505100004f000000000000000000000051525e004071420000000000000000000000000000640073000000730000000050
