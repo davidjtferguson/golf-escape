@@ -555,23 +555,28 @@ function avwallscollision()
 
 	  collisionimpact(av.x+(av.w/2),av.y,
 	   1,0.25,false,avcolours)
-	 elseif leftcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="lsquish"
+	 else
+   --only check collision for current direction
+   if av.xvel<=0 and leftcol(av,av.xvel,av.yvel,0) then
+    av.pauseanim="lsquish"
 
-	  collisionimpact(av.x,av.y+(av.h/2),
-	   0.25,1,true,avcolours)
+    collisionimpact(av.x,av.y+(av.h/2),
+     0.25,1,true,avcolours)
 
-	  moveavtoleft()
-   sidebounce()
-	 elseif rightcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="rsquish"
-	  
-	  collisionimpact(av.x+av.w,av.y+(av.h/2),
-	   -0.75,1,true,avcolours)
+    moveavtoleft()
+    sidebounce()
+   end
 
-	  moveavtoright()
-   sidebounce()
-	 end
+   if av.xvel>=0 and rightcol(av,av.xvel,av.yvel,0) then
+    av.pauseanim="rsquish"
+    
+    collisionimpact(av.x+av.w,av.y+(av.h/2),
+     -0.75,1,true,avcolours)
+
+    moveavtoright()
+    sidebounce()
+   end
+  end
 	else --on ground
 	 if allleftcol(av,av.xvel,0,0) then
 	  --todo:move av to wall?
@@ -717,8 +722,9 @@ function distancetowall(box,checkx,checky,direction,colfunc,topcheck)
 
   --if the distance gets longer than a tile,
   -- something's wrong. abort.
-  -- (hack - ideally would never occur but it does)
+  -- (hack - ideally would never occur)
   if abs(distancetowall)>1 then
+   debug="collision hack hit!"
    return distancetowall
   end
 
