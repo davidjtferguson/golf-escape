@@ -345,102 +345,6 @@ function handleswinginput()
  end
 end
 
-function avwallscollision()
- if groundcol(av,0,av.yvel,0) then
-  moveavtoground()
-  
-  --if vel low enough, land
-  if groundcol(av,0,av.yvel,6) or
-     abs(av.yvel)<0.075 then
-
-   if av.colstate!="ground" then
-    local cols=avcolours
-
-    if groundcol(av,0,av.yvel,6) then
-     cols=sandcolours
-    end
-
-    collisionimpact(av.x+(av.w/2),av.y+av.h,
-     1,-0.25,false,cols)
-
-    sfx(8)
-   end
-   
-   av.colstate="ground"  
-   
-	  av.xvel=0
-	  av.yvel=0
-	  
-	  av.canswing=true
-	
-	  --tredmills
-	  if groundcol(av,0,av.yvel,1) then
-	   av.xvel+=treadmillspeed
-	  end
-
-	  if groundcol(av,0,av.yvel,2) then
-	   av.xvel-=treadmillspeed
-	  end
-  else --bounce
-   av.xvel*=xbouncefrac
-   av.yvel*=ybouncefrac
-
-   av.pauseanim="gsquish"
-   
-   collisionimpact(av.x+(av.w/2),av.y+av.h,
-	   1,-0.25,false,avcolours)
-  end
- else
-  if av.slowstate=="in" then
-   av.yvel+=gravity*slowfrac
-  else
-   av.yvel+=gravity
-  
-   av.colstate="air"
-   av.canswing=false
-  end
- end
- 
- --other sides col
- if not groundcol(av,0,av.yvel,0) then
-	 if topcol(av,0,av.yvel,0) then
-	  moveavtoroof()
-	  av.yvel*=-1
-	  
-	  av.pauseanim="tsquish"
-
-	  collisionimpact(av.x+(av.w/2),av.y,
-	   1,0.25,false,avcolours)
-	 elseif leftcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="lsquish"
-
-	  collisionimpact(av.x,av.y+(av.h/2),
-	   0.25,1,true,avcolours)
-
-	  moveavtoleft()
-   sidebounce()
-	 elseif rightcol(av,av.xvel,av.yvel,0) then
-	  av.pauseanim="rsquish"
-	  
-	  collisionimpact(av.x+av.w,av.y+(av.h/2),
-	   -0.75,1,true,avcolours)
-
-	  moveavtoright()
-   sidebounce()
-	 end
-	else --on ground
-	 if allleftcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
-	  av.xvel=0
-	 end
- 
-	 if allrightcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
-	  av.xvel=0
-	 end
- end
-end
-
 function _draw()
  currentdraw()
 
@@ -585,6 +489,102 @@ end
 -->8
 --collision
 
+function avwallscollision()
+ if groundcol(av,0,av.yvel,0) then
+  moveavtoground()
+  
+  --if vel low enough, land
+  if groundcol(av,0,av.yvel,6) or
+     abs(av.yvel)<0.075 then
+
+   if av.colstate!="ground" then
+    local cols=avcolours
+
+    if groundcol(av,0,av.yvel,6) then
+     cols=sandcolours
+    end
+
+    collisionimpact(av.x+(av.w/2),av.y+av.h,
+     1,-0.25,false,cols)
+
+    sfx(8)
+   end
+   
+   av.colstate="ground"  
+   
+	  av.xvel=0
+	  av.yvel=0
+	  
+	  av.canswing=true
+	
+	  --tredmills
+	  if groundcol(av,0,av.yvel,1) then
+	   av.xvel+=treadmillspeed
+	  end
+
+	  if groundcol(av,0,av.yvel,2) then
+	   av.xvel-=treadmillspeed
+	  end
+  else --bounce
+   av.xvel*=xbouncefrac
+   av.yvel*=ybouncefrac
+
+   av.pauseanim="gsquish"
+   
+   collisionimpact(av.x+(av.w/2),av.y+av.h,
+	   1,-0.25,false,avcolours)
+  end
+ else
+  if av.slowstate=="in" then
+   av.yvel+=gravity*slowfrac
+  else
+   av.yvel+=gravity
+  
+   av.colstate="air"
+   av.canswing=false
+  end
+ end
+ 
+ --other sides col
+ if not groundcol(av,0,av.yvel,0) then
+	 if topcol(av,0,av.yvel,0) then
+	  moveavtoroof()
+	  av.yvel*=-1
+	  
+	  av.pauseanim="tsquish"
+
+	  collisionimpact(av.x+(av.w/2),av.y,
+	   1,0.25,false,avcolours)
+	 elseif leftcol(av,av.xvel,av.yvel,0) then
+	  av.pauseanim="lsquish"
+
+	  collisionimpact(av.x,av.y+(av.h/2),
+	   0.25,1,true,avcolours)
+
+	  moveavtoleft()
+   sidebounce()
+	 elseif rightcol(av,av.xvel,av.yvel,0) then
+	  av.pauseanim="rsquish"
+	  
+	  collisionimpact(av.x+av.w,av.y+(av.h/2),
+	   -0.75,1,true,avcolours)
+
+	  moveavtoright()
+   sidebounce()
+	 end
+	else --on ground
+	 if allleftcol(av,av.xvel,0,0) then
+	  --todo:move av to wall?
+	  av.xvel=0
+	 end
+ 
+	 if allrightcol(av,av.xvel,0,0) then
+	  --todo:move av to wall?
+	  av.xvel=0
+	 end
+ end
+end
+
 --allcollision
 function anycol(box,xvel,yvel,flag)
  return checkanyflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
@@ -693,7 +693,6 @@ function moveavtoroof()
 end
 
 function moveavtoleft()
-
  av.x+=distancetowall(
   av,1,0,-1,leftcol,true)
  
@@ -715,6 +714,13 @@ function distancetowall(box,checkx,checky,direction,colfunc,topcheck)
 
  while not colfunc(box,distancetowall*checkx,distancetowall*checky,0) do
   distancetowall+=(pixel*direction)
+
+  --if the distance gets longer than a tile,
+  -- something's wrong. abort.
+  -- (hack - ideally would never occur but it does)
+  if abs(distancetowall)>1 then
+   return distancetowall
+  end
 
   if allgroundcol(av,distancetowall,av.yvel,0) then
    --corner collision occured
@@ -1292,7 +1298,7 @@ function updatecamera()
  cam.yfree=camera1dbounds(cam.yfree,currlvl.ymap,currlvl.h)
 
  camera(cam.xfree*128,cam.yfree*128)
-
+ 
  if cam.free then
   cam.arrowcounter+=1
 
