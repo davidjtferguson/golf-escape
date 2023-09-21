@@ -852,7 +852,7 @@ function initlevels()
   --tutorial
   --{xmap=4,ymap=1,w=1,h=2},
   --float zone 3x3
-  --{xmap=7,ymap=0,w=1,h=1},
+  {xmap=7,ymap=0,w=1,h=1},
   --factory external
   --{xmap=6,ymap=2,w=1,h=1},
   --polly art test
@@ -1437,18 +1437,9 @@ function updateaim()
  }
 
  if av.canswing then
-	local wallhit=false
+	 local wallhit=false
 
   applyswing(aim)
-
-  --move a couple frames first
-  -- so we're not drawing
-  -- over our av.
-  updatemovement(aim)
-  aim.yvel+=gravity
-  
-  updatemovement(aim)
-  aim.yvel+=gravity
 
 	 while wallhit==false do
 		 local point={
@@ -1458,10 +1449,10 @@ function updateaim()
 
    add(aim.points,point)
    
-   updatemovement(aim)
-    
    aim.yvel+=gravity
-    
+
+   updatemovement(aim)
+
    resethurtbox(aim)
 
    if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
