@@ -850,7 +850,7 @@ function initlevels()
  -- find the enterance 
  lvls={
   --tutorial
-  --{xmap=4,ymap=1,w=1,h=2},
+  {xmap=4,ymap=1,w=1,h=2},
   --float zone 3x3
   {xmap=7,ymap=0,w=1,h=1},
   --factory external
@@ -1455,18 +1455,26 @@ function updateaim()
 
    resethurtbox(aim)
 
+   --simulate av collision
    if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
     wallhit=true
     aim.hitdeath=true
    end
 
-	  if anycol(aim,aim.xvel,aim.yvel,0)
-	     or #aim.points>100 then
+   if groundcol(aim,0,aim.yvel,0) or
+      topcol(aim,0,aim.yvel,0) or
+      leftcol(aim,aim.xvel,aim.yvel,0) or
+      rightcol(aim,aim.xvel,aim.yvel,0) or
+	     #aim.points>100 then
 	   wallhit=true
 	  end
    
    for h in all(hooks) do
-    if circlecollision(aim,h) then
+    --aim count is hack to prevent collision with hook
+    -- while av is on hook.
+    -- would be cleaner to simulate 'active' behaviour
+    -- but hold off and see if we need to.
+    if circlecollision(aim,h) and #aim.points>2 then
      wallhit=true
     end
    end
