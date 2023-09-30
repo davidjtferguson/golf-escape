@@ -73,6 +73,7 @@ function _init()
  --game object tables
  bumpers={}
  hooks={}
+ corpses={}
  
  initlevels()
  
@@ -191,10 +192,13 @@ function updateplaying()
   end
  end
  
- --spikes
+ --acid
  if anycol(av.hurtbox,0,0,4) then
   sfx(5)
   deathcount+=1
+  
+  createcorpse(av.x-(2*pixel)+av.xvel,av.y-(2*pixel)+av.yvel)
+  initburst(av.x,av.y,deathcolours)
   resetav()
   
   --lose key if not saved
@@ -286,6 +290,8 @@ function updateplaying()
  if currentupdate!=updateending then
   updateav()
  end
+
+ updatecorpses()
 
  updateanims()
  
@@ -407,6 +413,14 @@ function drawplaying()
  end
  
  --game objects
+ for c in all(corpses) do
+  drawobj(c,c.xflip,c.yflip)
+  
+  for p in all(c.particles) do
+   circfill(p.x*8,p.y*8,p.r,p.col)
+  end
+ end
+ 
  for b in all(bumpers) do
   drawobj(b)
   --drawcirc(b)
@@ -865,11 +879,11 @@ function initlevels()
  -- find the enterance 
  lvls={
   --belt maze
-  {xmap=6,ymap=1,w=2,h=1},
+  --{xmap=6,ymap=1,w=2,h=1},
   --hook maze newer
-  {xmap=2,ymap=0,w=1,h=1},
+  --{xmap=2,ymap=0,w=1,h=1},
   --float climb
-  --{xmap=2,ymap=2,w=1,h=2},
+  {xmap=2,ymap=2,w=1,h=2},
   --controls tutorial
   --{xmap=4,ymap=1,w=1,h=2},
   --bunker tutorial 2
@@ -1101,6 +1115,22 @@ function makebackgrounds()
   xvel=0.05,
   yvel=0.05,
  }
+end
+
+function createcorpse(x,y)
+ c={
+  x=x,
+  y=y,
+  s=11,
+  xflip=rnd()<0.5,
+  yflip=rnd()<0.5,
+  lifespan=0,
+  step=8+flr(rnd(5)),
+  stage="start",
+  particles={},
+ }
+ 
+ add(corpses,c)
 end
 
 function nextlevel()
@@ -1617,6 +1647,46 @@ function sidebounce()
  topcoloverwrite=false
 end
 
+function updatecorpses()
+ for c in all(corpses) do
+  c.lifespan+=1
+  
+  if c.lifespan%c.step==0 then
+   c.step=7+flr(rnd(5))
+
+   if c.stage=="start" then
+    if c.lifespan>=20 then
+     c.lifespan=0
+     c.stage="grow"
+    end
+   elseif c.stage=="grow" then
+    local p={
+     x=c.x+rnd(0.9),
+     y=c.y+rnd(0.9),
+     r=rnd(2),
+     col=deathcolours[1+flr(rnd(#deathcolours))],
+    }
+    
+    add(c.particles,p)
+   
+    if c.lifespan>=200 then
+     c.stage="decay"
+
+     --body is dissolved
+     c.s=-1
+    end
+   elseif c.stage=="decay" then
+    del(c.particles,
+     c.particles[1+flr(rnd(#c.particles))])
+    
+    if #c.particles==0 then
+     del(corpses,c)
+    end
+   end
+  end
+ end
+end
+
 function lsfx(no)
  currno=stat(49)
  
@@ -2079,6 +2149,7 @@ sparkcolours={6,7,8}
 avcolours={15,15,4,6}
 sandcolours={10,10,9,6}
 hookcolours={2,5,6,6,6}
+deathcolours={3,3,5,11,13}
 
 function createeffect(update)
  e={
@@ -2168,6 +2239,23 @@ function updatedustkick(e)
  end
 end
 
+function initburst(x,y,cols)
+ local e=createeffect(updatedustkick)
+
+ for i=0,7 do
+  local col=cols[1+flr(rnd(#cols))]
+
+  local p=createparticle(
+   (x+0.5)*8,(y+0.5)*8,
+   rnd(1.6)-0.8,rnd(1.6)-0.8,
+   0+flr(rnd(2)),col,
+   2+rnd(5))
+  
+  p.timeout=10+rnd(5)
+  add(e.particles,p)
+	end
+end
+
 function collisionimpact(x,y,dx,dy,wall,cols)
  sfx(0)
 
@@ -2230,12 +2318,12 @@ end
 
 __gfx__
 00066000000000000000000000000000000000000000000000000000eeeeeeee00000000000dd000000dd0000000000000040400004004000040400000400400
-00066000000000000000000000000000000000000000000000702200eeeeeeee0000000000dddd0000dddd00000bb000000ff000000ff000000ff000000ff000
-00066000000000000000000000000000000000000000000000712200eeeeeeee00000000677dd777677dd777000833b004f1f100001f1f00001f1f4000f1f100
-00066000000000000000000000000000000000000000000000712200eeeeeeee00000000600700076007e0e7003e380000fffe0000feff0000efff0000ffef40
-06666660000000000000000000000000000000000000000000710000eeeeeeee000000007807e0e7708708070033330000fffff004ffff000fffff0000ffff00
-05666650000000000000000000000000000000000000000000700000eeeeeeee0000000078070807780708070003330000f0000000f00f0000000f0000f00f00
-00566500000000000000000000000000000000000000000000700000eeeeeeee0000000060878007608780070030300000000000000000000000000000000000
+00066000000000000000000000000000000000000000000000702200eeeeeeee0000000000dddd0000dddd0000066000000ff000000ff000000ff000000ff000
+00066000000000000000000000000000000000000000000000712200eeeeeeee00000000677dd777677dd7770008dd6004f1f100001f1f00001f1f4000f1f100
+00066000000000000000000000000000000000000000000000712200eeeeeeee00000000600700076007e0e700ded80000fffe0000feff0000efff0000ffef40
+06666660000000000000000000000000000000000000000000710000eeeeeeee000000007807e0e77087080700dddd0000fffff004ffff000fffff0000ffff00
+05666650000000000000000000000000000000000000000000700000eeeeeeee000000007807080778070807000ddd0000f0000000f00f0000000f0000f00f00
+00566500000000000000000000000000000000000000000000700000eeeeeeee0000000060878007608780070060d00000000000000000000000000000000000
 00055000000000000000000000000000000000000000000000700000eeeeeeee0000000066777766667777660000000000000000000000000000000000000000
 00000000e0e000000000000000666600006666000066660006600000000000000000000000000000000000000000000000000000000000000000040400000000
 0000660008000000e0e000000611116006ccac60065555606766000000707700007007000070000000000000000040400000404000004040000007f700004040
