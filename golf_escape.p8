@@ -114,7 +114,7 @@ function updateplaying()
  end
 
  --collision
- if currentupdate!=updateending then
+ if currentupdate!=updateending and av.respawnstate=="alive" then
   avwallscollision()
  end
 
@@ -161,7 +161,7 @@ function updateplaying()
    end
   end
 
-  if circlecollision(av,h) and
+  if av.respawnstate=="alive" and circlecollision(av,h) and
      h.active and
      currentupdate==updateplaying then
    --todo:sfx for land on hook
@@ -192,87 +192,89 @@ function updateplaying()
   end
  end
  
- --acid
- if anycol(av.hurtbox,0,0,4) then
-  sfx(5)
-  deathcount+=1
+ if av.respawnstate=="alive" then
+  --acid
+  if anycol(av.hurtbox,0,0,4) then
+   sfx(5)
+   deathcount+=1
 
-  --could improve how in the acid this is somehow
-  createcorpse(av.x-(2*pixel)+av.xvel,av.y-(2*pixel)+av.yvel)
-  
-  initburst(av.x,av.y,deathcolours)
-  
-  resetav()
-  
-  --lose key if not saved
-  if currlvl.haskey and
-     currlvl.key.collected and
-     not currlvl.key.saved then
-   currlvl.exit.s=21
-   currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
-  end
- end
- 
- --checkpoint
- if anycol(av.hurtbox,0,0,5) then
-
-  --save key if held
-  if currlvl.haskey and
-   currlvl.key.collected then
-   --todo:sfx here? for 'key saved'?
-   currlvl.key.saved=true
-  end
-
-  --if new cp hit
-  if xcp!=xhitblock or
-     ycp!=yhitblock then
-
-   --clear old cp
-   -- if not spawn
-   if not isspawn(xcp,ycp) then
-    mset(xcp,ycp,6)
-   end
+   --could improve how in the acid this is somehow
+   createcorpse(av.x-(2*pixel)+av.xvel,av.y-(2*pixel)+av.yvel)
    
-	  --set new cp
-	  sfx(6)
-	  xcp,ycp=xhitblock,yhitblock
-	  mset(xcp,ycp,23)
+   initburst(av.x,av.y,deathcolours)
+   
+   av.respawnstate="dead"
+
+   --lose key if not saved
+   if currlvl.haskey and
+      currlvl.key.collected and
+      not currlvl.key.saved then
+    currlvl.exit.s=21
+    currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
+   end
   end
- end
  
- --float zone
- if allcol(av,av.xvel,av.yvel,6) and
-    av.slowstate=="none" then
+  --checkpoint
+  if anycol(av.hurtbox,0,0,5) then
 
-  av.canswing=true
+   --save key if held
+   if currlvl.haskey and
+    currlvl.key.collected then
+    --todo:sfx here? for 'key saved'?
+    currlvl.key.saved=true
+   end
 
-  av.slowstate="in"
- 
- elseif not allcol(av,0,0,6) and
-        av.slowstate!="none" then
+   --if new cp hit
+   if xcp!=xhitblock or
+      ycp!=yhitblock then
 
-  --reset on leaving a slowzone
-  av.slowstate="none"
- end
- 
- --level markers
- if circlecollision(av,currlvl.exit) and
-    (not currlvl.haskey or
-     currlvl.key.collected) and
-    av.colstate=="ground" and
-    currentupdate==updateplaying then
-  initlvlend()
- end
+    --clear old cp
+    -- if not spawn
+    if not isspawn(xcp,ycp) then
+     mset(xcp,ycp,6)
+    end
+    
+    --set new cp
+    sfx(6)
+    xcp,ycp=xhitblock,yhitblock
+    mset(xcp,ycp,23)
+   end
+  end
+  
+  --float zone
+  if allcol(av,av.xvel,av.yvel,6) and
+     av.slowstate=="none" then
 
- if currlvl.haskey and
-    circlecollision(av,currlvl.key) and
-    not currlvl.key.collected then
-  --collect key
-  sfx(7)
-  currlvl.exit.s=20
-  currlvl.key.collected=true
-  currlvl.key.anim.basesprite=17
-  currlvl.key.anim.sprites=1
+   av.canswing=true
+
+   av.slowstate="in"
+  
+  elseif not allcol(av,0,0,6) and
+         av.slowstate!="none" then
+
+   --reset on leaving a slowzone
+   av.slowstate="none"
+  end
+  
+  --level markers
+  if circlecollision(av,currlvl.exit) and
+     (not currlvl.haskey or
+      currlvl.key.collected) and
+     av.colstate=="ground" and
+     currentupdate==updateplaying then
+   initlvlend()
+  end
+
+  if currlvl.haskey and
+     circlecollision(av,currlvl.key) and
+     not currlvl.key.collected then
+   --collect key
+   sfx(7)
+   currlvl.exit.s=20
+   currlvl.key.collected=true
+   currlvl.key.anim.basesprite=17
+   currlvl.key.anim.sprites=1
+  end
  end
  
  if currlvl.haskey and
@@ -566,11 +568,11 @@ function avwallscollision()
    
 	  --tredmills
 	  if groundcol(av,0,av.yvel,1) then
-	   av.xvel+=treadmillspeed
+	   av.xvel=treadmillspeed
 	  end
 
 	  if groundcol(av,0,av.yvel,2) then
-	   av.xvel-=treadmillspeed
+	   av.xvel=-treadmillspeed
 	  end
   else --bounce
    av.xvel*=xbouncefrac
@@ -882,9 +884,9 @@ function initlevels()
  -- find the enterance 
  lvls={
   --mover hooks horiz&vert
-  {xmap=0,ymap=2,w=1,h=1},
+  --{xmap=0,ymap=2,w=1,h=1},
   --belt maze
-  --{xmap=6,ymap=1,w=2,h=1},
+  {xmap=6,ymap=1,w=2,h=1},
   --hook maze newer
   --{xmap=2,ymap=0,w=1,h=1},
   --float climb
@@ -957,6 +959,10 @@ function resetav()
   colstate="air",
   
   slowstate="none",
+
+  respawnstate="alive",
+  respawncounter=0,
+  respawnlength=20,
 
   canswing=false,
   
@@ -1240,29 +1246,56 @@ end
 --update logic
 
 function updateav()
- if av.canswing then
-  av.xflip=swing.xvec<0
- else
-  av.xflip=av.xvel<0
- end
- 
- --movement
- local frameslowfrac=1
- 
- if av.slowstate=="in" then
-  frameslowfrac=slowfrac
+
+ if av.respawnstate=="alive" then
+  if av.canswing then
+   av.xflip=swing.xvec<0
+  else
+   av.xflip=av.xvel<0
+  end
+  
+  --movement
+  local frameslowfrac=1
+  
+  if av.slowstate=="in" then
+   frameslowfrac=slowfrac
+  end
+
+  if av.xpause<=0 then
+   av.x=av.x+(av.xvel*frameslowfrac)
+  end
+  
+  if av.ypause<=0 then
+   av.y=av.y+(av.yvel*frameslowfrac)
+  end
+  
+  resethurtbox(av)
+ elseif av.respawnstate=="dead" then
+  av.respawncounter+=1
+
+  if av.respawncounter>=30 then
+   
+   --if top of count,
+   -- move av to current checkpoint
+   av.x=xcp+pixel*2
+   av.y=ycp+pixel*2
+   
+   sfx(13)
+
+   initcollect(av.x+(2*pixel),av.y+(2*pixel),avcolours)
+
+   av.respawnstate="respawn"
+   av.respawncounter=0
+  end
+
+ elseif av.respawnstate=="respawn" then
+  av.respawncounter+=1
+
+  if av.respawncounter>=av.respawnlength then
+   resetav()
+  end
  end
 
- if av.xpause<=0 then
-  av.x=av.x+(av.xvel*frameslowfrac)
- end
- 
- if av.ypause<=0 then
-  av.y=av.y+(av.yvel*frameslowfrac)
- end
- 
- resethurtbox(av)
- 
  if av.xpause<=0 and
     av.ypause<=0 and
     av.animpause<=0 then
@@ -1448,25 +1481,25 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 	return lcam
 end
 
-function movetopoint(from,to)
- local scrollfrac=0.25
- local maxscrollspeed=0.1
+function movetopoint(from,to,frac,maxspeed)
+ local scrollfrac=frac or 0.25
+ local maxspeed=maxspeed or 0.1
 
-	local cameradiff=to-from
+	local diff=to-from
 	
- if abs(cameradiff)<0.01 then
+ if abs(diff)<0.01 then
 	 return to
 	end
 
-	cameradiff*=scrollfrac
+	diff*=scrollfrac
 	
-	if cameradiff>maxscrollspeed then
-		cameradiff=maxscrollspeed
-	elseif cameradiff<-maxscrollspeed then
-		cameradiff=-maxscrollspeed
+	if diff>maxspeed then
+		diff=maxspeed
+	elseif diff<-maxspeed then
+		diff=-maxspeed
 	end
 	
-	return from+cameradiff
+	return from+diff
 end
 
 function angleinrange(angle,range)
@@ -1804,7 +1837,12 @@ function avanimfind(t)
 	 t.basesprite=12
 	 t.sprites=4
 	 t.speed=15
- end 
+ end
+
+ --don't show av if dead
+ if av.respawnstate!="alive" then
+  t.basesprite=-10
+ end
 end
 
 function makeanimt(bs,sd,sprs)
@@ -2259,6 +2297,50 @@ function initburst(x,y,cols)
 	end
 end
 
+function initcollect(x,y,cols)
+ local e=createeffect(updatecollect)
+ e.x=x*8
+ e.y=y*8
+
+ local r=4
+ 
+ for i=0,1,(1/16) do
+ 
+  local x=x+r*cos(i)
+  local y=y+r*sin(i)
+
+  local col=cols[1+flr(rnd(#cols))]
+
+  local p=createparticle(
+   x*8,y*8,
+   0,0,
+   0,col,av.respawnlength/2)
+   
+  p.timeout=av.respawnlength/2
+  add(e.particles,p)
+ end
+end
+
+function updatecollect(e)
+ for p in all(e.particles) do
+  frac,maxspeed=0.25,1.4
+
+  p.x=movetopoint(p.x,e.x,frac,maxspeed)
+  p.y=movetopoint(p.y,e.y,frac,maxspeed)
+
+  p.timeout-=1
+  
+  if p.timeout<=0 and p.r<2 then
+    p.r+=1
+    p.timeout=p.decreasestep
+  end
+ end
+ 
+ if av.respawnstate=="alive" then
+  del(effects,e)
+ end
+end
+
 function collisionimpact(x,y,dx,dy,wall,cols)
  sfx(0)
 
@@ -2293,7 +2375,7 @@ function feetpos()
  end
 end
 
---TODO:use for opening cutscene
+--todo:use for opening cutscene
 -- after entering factory, in from black
 function initfade(x,y,col)
  local e=createeffect(updatedustkick)
@@ -2599,12 +2681,12 @@ __map__
 5151515d5d51515d5d51515d51515d5d51000051510000515100515151515d5d5d230000000000005d5d5d210000275d520013000000006f0000007f000000505100000000000000000000005d0014007d7d7d7d7d7d7d7d7d7d7d00000000515274757579000006000000747575795051527475796f7475796f7475795c7b51
 51515151515151515151515d51515d5d515d5d51515d5d51515d515d51515d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d517171717171717171717171717171515151515151515151515151515151515151515151515151515151515151515151514c5d5d4e4071717171424c5d5d4e5151514d4d4d5d4d4d4d5d4d4d4d5d7b51
 51515151515151515151515151515151515151515151515151515151515151515151515151515151515151515d51515151515151626d6d6d6d6d6d6d6051515151515151515151515151515151515151515151515151515151515151515151515251515151515151515151515151515151515151515151515151515151515151
-5100000000000000000000000000000000000000000000000000000000000051515d5e0000000000000000007f000000006309000000000000000000000000505151626b6b6051515151624b6b60515151000000000000000000004f00000051520000000000000000510000000000000000000000005100000000000000005d
-5100000000000000000000000000000000000000000000000000000000000051515d6e00000000000000000000000000006300000000000000000000000000505200006b6b0000000000006b6b0060515100000000000000000000004f000051520000000000000000510000000000000000000000005100000000000000005d
-51000000000000000000000000000000000000000000004c4e00000000000051515e00000000000000000000000000000063000000000000000000000000005052000000000000000000000000000050510015000000000000000000004f0051520000000000131400510000000000000000000000005145450000000000005d
-51000000000051515151515151515100000000060000005c5e00000000000051515e0000005f0000000000005f00000000630000002800005f00000000004c515200000000000000000000001300005051005151001300000000000000004f51524848000000515151510000000051515151000000005d000000000048484850
-5e0000000000515151516d6d6d6d5d51515151515151516d6e00000000000051515e0000006f0000000000006f00001300505600000000005c4d7e00007c6d5152000053000000530000004071717151510000515151510000000000000000515200000000005d0000000000000000515100000000005d00000000000000005d
-5e666768000000000000000000005c5151000000000000000000006667676851516e00004c5e00004457574d6d57454547515d7d7e007c7d6d5e00000000005052000063000000507171715151515151510000000000000000000000000000515200000000005d0000000000585858515148484800005158585800000000005d
+5100000000000000000000000000000000000000000000000000000000000051515d5e0000000000000000007f000000006309000000000000000000000000505151626b6b6051515151624b6b60515151000000000000000000004f000000515200000000000000000000000000000000005d0000005100000000000000005d
+5100000000000000000000000000000000000000000000000000000000000051515d6e00000000000000000000000000006300000000000000000000000000505200006b6b0000000000006b6b0060515100000000000000000000004f0000515200000000000000000000000000000000005d0000005100000000000000005d
+51000000000000000000000000000000000000000000004c4e00000000000051515e00000000000000000000000000000063000000000000000000000000005052000000000000000000000000000050510015000000000000000000004f00515200000000001314000000000000000000005d0000005145450000000000005d
+51000000000051515151515151515100000000060000005c5e00000000000051515e0000005f0000000000005f00000000630000002800005f00000000004c515200000000000000000000001300005051005151001300000000000000004f515248480000005151515100000000005151515d0000005d000000000048484850
+5e0000000000515151516d6d6d6d5d51515151515151516d6e00000000000051515e0000006f0000000000006f00001300505600000000005c4d7e00007c6d5152000053000000530000004071717151510000515151510000000000000000515200000000005d00000000000000005151005d0000005d00000000000000005d
+5e666768000000000000000000005c5151000000000000000000006667676851516e00004c5e00004457574d6d57454547515d7d7e007c7d6d5e00000000005052000063000000507171715151515151510000000000000000000000000000515200000000005d00000000005858585151485d4800005158585800000000005d
 5e767778000000000028000027005c5151000000000000000000007677777851510000005c5e00006c6d6d5e000000006c6d6e0000000000006f00000000005052000060717171620000000000006051514f00000000000000000000000000515200000058585d000000000000000000000000000000005d000000000000005d
 5e7475790000515151514e0000006c5151000000000000000000007475757951510000005c6d7d7e0000007f000000000000000000000000005c7d7e00007c515200000000000000000000000000005051004f000000000000000000000000515200000000000000000000000000000000000000000000000000004848484850
 5d7d7d7d7d7d6d6d6d6d6e00000000515100000000000000004c4d4d4d4d4d515100007c5e00000000000000000000000000000000000000006f000000000050520000000000000000000000060000505100004f0000000000000000000000515248480000000000000000585858585858585858585858585d0000005d000050
@@ -2628,7 +2710,7 @@ __sfx__
 7d17000018653000000e653000000e6530000000000186531f653000001a653000001a65300000000000000018653000000e653000000e6530000000000186531f653000001a653000001a653000000000000000
 011700001c55600000000001c556000001d5561d5561d5561c556000001c55600000000001d5561c5561a55618556155560000015556000001555600000155561f556000001c556000001c5561c5560000000000
 011700001c05600000000001c056000001d0561d0561d0561c056000001c05600000000001d0561c0561a05618056150560000015056000001505600000150561f056000001c056000001c0561c0560000000000
-011700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000300001853017520165201652016530175301a5401c54024250283702a400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __music__
 01 0a4b4344
 00 0a0b4344
