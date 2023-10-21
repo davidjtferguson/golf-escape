@@ -923,9 +923,9 @@ function initlevels()
   --tall level design tests
   --{xmap=5,ymap=1,w=1,h=2},
   --mover hooks horizontal
-  {xmap=3,ymap=0,w=1,h=1},
+  --{xmap=3,ymap=0,w=1,h=1},
   --hook maze older
-  {xmap=0,ymap=3,w=1,h=1},
+  --{xmap=0,ymap=3,w=1,h=1},
   --wide slows
   --{xmap=0,ymap=1,w=2,h=1},
   --climb upwards slows
@@ -1960,10 +1960,6 @@ end
 -- other states
 
 function initstartscreen()
- --TODO:kick off
- -- 'i must save the worms'
- -- animation
- 
  resetav()
  
  av.x=(6*16)+1.5
@@ -1982,9 +1978,13 @@ function updatestartscreen()
 end
 
 function drawstartscreen()
- drawbeginning()
+ drawbeginning(false)
 
- --TODO:Also draw 'I must save the worms'
+ if av.colstate=="ground" then
+  s="i must save the worms!"
+  outline(s,
+   (6*128)+hw(s),(2*128)+40,0,7)
+ end
 end
 
 function initintro()
@@ -2012,7 +2012,7 @@ function updateintro()
 
  if introstate=="start" then
 
-  if introtimer>=140 then
+  if introtimer>=100 then
    introstate="aim"
    introtimer=0
   end
@@ -2049,21 +2049,16 @@ function updateintro()
    
    currentupdate=updateplaying
    currentdraw=drawplaying
+   
+   initfade(currlvl.xmap*16,currlvl.ymap*16,0)
   end
  end
-
- --charge
- --launch
- --collide with window
- --cut, initlevels,
- -- fade through black
 end
 
 function drawintro()
- drawbeginning()
- drawaim()
+ drawbeginning(true)
 
- circfill(introwindow.x*8,introwindow.y*8,introwindow.r,2)
+ --circfill(introwindow.x*8,introwindow.y*8,introwindow.r,2)
 end
 
 function updatebeginning()
@@ -2081,9 +2076,14 @@ function updatebeginning()
  
 end
 
-function drawbeginning()
+function drawbeginning(isdrawaim)
  drawfactory()
  drawparticles(false)
+
+ if isdrawaim then
+  drawaim()
+ end
+ 
  drawav()
  drawparticles(true)
 end
@@ -2229,9 +2229,9 @@ function initending()
  currlvl.h=1
  currlvl.haskey=false
  
- --todo:revisit after
- -- opening cutscene made
- currlvl.exit.s=20
+ --todo:push open door
+ -- into map
+ --currlvl.exit.s=20
  
  av.x=(currlvl.xmap*16)+8
  av.y=(currlvl.ymap*16)+15
