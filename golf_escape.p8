@@ -63,9 +63,13 @@ function _init()
  
  makebackgrounds()
  
- currentupdate=updateplaying
- currentdraw=drawplaying
+ --currentupdate=updateplaying
+ --currentdraw=drawplaying
  
+ --initlevels()
+ 
+ initstartscreen()
+
  aim={
   points={}
  }
@@ -75,8 +79,6 @@ function _init()
  hooks={}
  corpses={}
  
- initlevels()
- 
  --stats for end screen
  deathcount,swingcount=0,0
  frames,seconds,minutes,hours=0,0,0,0
@@ -85,7 +87,7 @@ end
 function _update60()
  currentupdate()
   
- debug=stat(7)..".."..stat(1)
+ --debug=stat(7)..".."..stat(1)
 end
 
 function updateplaying()
@@ -324,18 +326,7 @@ function handleswinginput()
 
   --power boost swing
   if btnp(❎) then
-   swing.currdecaypause=swing.decaypause
-   swing.force+=swing.btnf
-   
-   swing.decay=swing.basedecay
-   
-   if swing.force>swing.highf then
-    swing.force=swing.highf
-   end
-
-   av.pauseanim="boost"
-   av.animpause=10
-   resetanimt(av.anim)
+   boostswing()
   end
   
   --release swing
@@ -381,6 +372,8 @@ function _draw()
  currentdraw()
 
  print(debug,cam.xfree*128,cam.yfree*128,7)
+ 
+ print(debug,6*128,2*128,7)
 end
 
 function drawplaying()
@@ -449,39 +442,7 @@ function drawplaying()
  end
 
  if av.canswing and not av.dancing then
-  --draw aim
-  
-  linecol=13
-  
-  if swing.currdecaypause>0 then
-   linecol=6
-  end
-  
-  --todo:consider look. lines?
-  for point in all(aim.points) do
-   pset(
-    (av.w/2+point.x)*8,
-    (av.h/2+point.y)*8,linecol)
-  end
-
-  --where player should land for debugging 
-  -- rect(aim.x*8,aim.y*8,
-  --  (aim.x+aim.w)*8,
-  --  (aim.y+aim.h)*8,2)
-  --circfill(aim.x*8+1,
-  -- aim.y*8+1,1.5,7)
-  local off=0
-  
-  if aim.hitdeath then
-   off=4
-  end
-  
-  sspr(48+off,8+off,
-   4,4,
-   aim.x*8,aim.y*8)
-  
-  --spr(22,
-  -- aim.x*8,aim.y*8)
+  drawaim()
  end
  
  --tab 6
@@ -497,9 +458,7 @@ function drawplaying()
 
  --av draw
  -- -2 for sprite offset
- spr(av.anim.sprite,
-  ((av.x-(2*pixel))*8),
-  ((av.y-(2*pixel))*8),1,1,av.xflip,av.yflip)
+ drawav()
 
  --hitbox 
  --rect(av.x*8,av.y*8,(av.x+av.w)*8,(av.y+av.h)*8,3)
@@ -532,6 +491,46 @@ function drawplaying()
  end
 end
 
+function drawaim()
+ linecol=13
+ 
+ if swing.currdecaypause>0 then
+  linecol=6
+ end
+ 
+ --todo:consider look. lines?
+ for point in all(aim.points) do
+  pset(
+   (av.w/2+point.x)*8,
+   (av.h/2+point.y)*8,linecol)
+ end
+
+ --where player should land for debugging 
+ -- rect(aim.x*8,aim.y*8,
+ --  (aim.x+aim.w)*8,
+ --  (aim.y+aim.h)*8,2)
+ --circfill(aim.x*8+1,
+ -- aim.y*8+1,1.5,7)
+ local off=0
+ 
+ if aim.hitdeath then
+  off=4
+ end
+ 
+ sspr(48+off,8+off,
+  4,4,
+  aim.x*8,aim.y*8)
+ 
+ --spr(22,
+ -- aim.x*8,aim.y*8)
+end
+
+function drawav()
+ spr(av.anim.sprite,
+  ((av.x-(2*pixel))*8),
+  ((av.y-(2*pixel))*8),1,1,av.xflip,av.yflip)
+end
+
 function drawobj(obj,xflip,yflip)
  spr(obj.s,obj.x*8,obj.y*8,1,1,xflip,yflip)
 end
@@ -539,6 +538,16 @@ end
 function drawcirc(obj)
  circ((obj.x+obj.r)*8,(obj.y+obj.r)*8,obj.r*8)
 end
+
+function drawfactory()
+ cls(12)
+
+ xmap,ymap=6,2
+ 
+ map(xmap*16,ymap*16,xmap*128,ymap*128,16,16)
+ camera(xmap*128,ymap*128)
+end
+
 -->8
 --collision
 
@@ -892,13 +901,13 @@ function initlevels()
   --mover hooks horiz&vert
   --{xmap=0,ymap=2,w=1,h=1},
   --belt maze
-  {xmap=6,ymap=1,w=2,h=1},
+  --{xmap=6,ymap=1,w=2,h=1},
   --hook maze newer
   --{xmap=2,ymap=0,w=1,h=1},
   --float climb
-  {xmap=2,ymap=2,w=1,h=2},
+  --{xmap=2,ymap=2,w=1,h=2},
   --controls tutorial
-  --{xmap=4,ymap=1,w=1,h=2},
+  {xmap=4,ymap=1,w=1,h=2},
   --bunker tutorial 2
   --{xmap=1,ymap=0,w=1,h=1},
   --bunker tutorial
@@ -907,8 +916,6 @@ function initlevels()
   --{xmap=6,ymap=0,w=1,h=1},
   --float zone 3x3
   --{xmap=7,ymap=0,w=1,h=1},
-  --factory external
-  --{xmap=6,ymap=2,w=1,h=1},
   --wide level bunkers
   --{xmap=2,ymap=1,w=2,h=1},
   --wide level long swings
@@ -1606,6 +1613,21 @@ function rotatevec(x,y,angle)
  return newx,newy
 end
 
+function boostswing()
+ swing.currdecaypause=swing.decaypause
+ swing.force+=swing.btnf
+ 
+ swing.decay=swing.basedecay
+ 
+ if swing.force>swing.highf then
+  swing.force=swing.highf
+ end
+
+ av.pauseanim="boost"
+ av.animpause=10
+ resetanimt(av.anim)
+end
+
 function hookreleaseav(hook)
  hook.active=false
  
@@ -1935,7 +1957,136 @@ function outline(s,x,y,c1,c2)
 end
 
 -->8
--- transition and ending state
+-- other states
+
+function initstartscreen()
+ --TODO:kick off
+ -- 'i must save the worms'
+ -- animation
+ 
+ resetav()
+ 
+ av.x=(6*16)+1.5
+ av.y=(2*16)+1
+ 
+ currentupdate=updatestartscreen
+ currentdraw=drawstartscreen
+end
+
+function updatestartscreen()
+ updatebeginning()
+
+ if btnp()>0 and av.colstate=="ground" then
+  initintro()
+ end
+end
+
+function drawstartscreen()
+ drawbeginning()
+
+ --TODO:Also draw 'I must save the worms'
+end
+
+function initintro()
+ currentupdate=updateintro
+ currentdraw=drawintro
+
+ updateaim()
+
+ introstate="start"
+ introtimer=0
+
+ introwindow={
+  x=(6*16)+9,
+  y=(2*16)+3,
+  r=5}
+end
+
+function updateintro()
+ updateaim()
+
+ updatebeginning()
+
+ --timers
+ introtimer+=1
+
+ if introstate=="start" then
+
+  if introtimer>=140 then
+   introstate="aim"
+   introtimer=0
+  end
+ elseif introstate=="aim" then
+  rotacc(-1)
+  
+  if introtimer>=20 then
+   introstate="aimpause"
+   introtimer=0
+  end
+ elseif introstate=="aimpause" then
+  if introtimer>=60 then
+   introstate="charge"
+   introtimer=0
+  end
+ elseif introstate=="charge" then
+  if introtimer%15==0 then
+   boostswing()
+  end
+
+  if introtimer>=120 then
+   sfx(1)
+   
+   applyswing(av)
+   resetswing()
+
+   introstate="hitwindow"
+   introtimer=0
+  end
+ elseif introstate=="hitwindow" then
+  if circlecollision(av,introwindow) then
+   sfx(9)
+   initlevels()
+   
+   currentupdate=updateplaying
+   currentdraw=drawplaying
+  end
+ end
+
+ --charge
+ --launch
+ --collide with window
+ --cut, initlevels,
+ -- fade through black
+end
+
+function drawintro()
+ drawbeginning()
+ drawaim()
+
+ circfill(introwindow.x*8,introwindow.y*8,introwindow.r,2)
+end
+
+function updatebeginning()
+ --could activate/deactivate this
+ -- to allow for using all tiles on
+ -- drawing of factory.
+ avwallscollision()
+
+ updateav()
+ 
+ avanimfind(av.anim)
+ updateanimt(av.anim)
+ 
+ updateparticleeffects()
+ 
+end
+
+function drawbeginning()
+ drawfactory()
+ drawparticles(false)
+ drawav()
+ drawparticles(true)
+end
 
 function initlvlend()
  currentupdate=updatelvlend
@@ -2408,14 +2559,14 @@ function initfade(x,y,col)
 end
 
 __gfx__
-00066000000000000000000000000000000000000000000000000000eeeeeeee00000000000dd000000dd0000000000000040400004004000040400000400400
-00066000000660000000000000000000000000000000000000702200eeeeeeee0000000000dddd0000dddd0000000000000ff000000ff000000ff000000ff000
-000660000008dd6006d8e0d000000000000000000000000000712200eeeeeeee00000000677dd777677dd7770000000004f1f100001f1f00001f1f4000f1f100
-0006600000ded80000dddd0000000000000000000000000000712200eeeeeeee00000000600700076007e0e70000000000fffe0000feff0000efff0000ffef40
-0666666000dddd0006d8ddd000000000000000000000000000710000eeeeeeee000000007807e0e7708708070000000000fffff004ffff000fffff0000ffff00
-05666650000ddd00000dd60000000000000000000000000000700000eeeeeeee0000000078070807780708070000000000f0000000f00f0000000f0000f00f00
-005665000060d0000000000000000000000000000000000000700000eeeeeeee0000000060878007608780070000000000000000000000000000000000000000
-00055000000000000000000000000000000000000000000000700000eeeeeeee0000000066777766667777660000000000000000000000000000000000000000
+00066000000000000000000000000000000000000000000000000000eeeeeeee88666688000dd000000dd0000000000000040400004004000040400000400400
+00066000000660000000000000000000000000000000000000702200eeeeeeee8656656800dddd0000dddd0000000000000ff000000ff000000ff000000ff000
+000660000008dd6006d8e0d000000000000000000000000000712200eeeeeeee64456446677dd777677dd7770000000004f1f100001f1f00001f1f4000f1f100
+0006600000ded80000dddd0000000000000000000000000000712200eeeeeeee65566556600700076007e0e70000000000fffe0000feff0000efff0000ffef40
+0666666000dddd0006d8ddd000000000000000000000000000710000eeeeeeee644654467807e0e7708708070000000000fffff004ffff000fffff0000ffff00
+05666650000ddd00000dd60000000000000000000000000000700000eeeeeeee6556655678070807780708070000000000f0000000f00f0000000f0000f00f00
+005665000060d0000000000000000000000000000000000000700000eeeeeeee6445644660878007608780070000000000000000000000000000000000000000
+00055000000000000000000000000000000000000000000000700000eeeeeeee6556655666777766667777660000000000000000000000000000000000000000
 00000000e0e000000000000000666600006666000066660006600000000000000000000000000000000000000000000000000000000000000000040400000000
 0000660008000000e0e000000611116006ccac60065555606766000000707700007007000070000000000000000040400000404000004040000007f700004040
 000066600800000008000000611111166ccacac665e5e55667770000007677000076770000767700000000000040fff00040fff00040fff00000717100000fff
@@ -2499,7 +2650,7 @@ d5d5d4e400000000000000f700c6d515150000000000000000000000f400001500000000000000a5
 2503330000000000000003360000c7d5150000000000000000000077777777151526000067778700000000667686c51525000000000000000000000000000005
 25000000000000000000000000000005150000f40000000000000000900000150000009696969696969696969600000025000000000000052500000044545415
 25000000000000c4d4d7d43613901305150000000000000000000077777777152500000047579700000000677787c51515650000000000000000350031000415
-1524000000000000000000000000041515000000f400000000000000000000159431009696969696419696969600a40025000000000000052600000000000015
+1524000000000000000000000000041515000000f400000000000000000000159400009696969696809696969600a40025000000000000052600000000000015
 25000031000000f6f700f63603600305155100310000d5d5d5d5d5d5d5d5d51525000000000000000000f5475797c51515151724d4d4d4d4d4d4151717171515
 1515240051000000000000000004151515000000000000000000006000000015959595959595959595959595959595952500003100000005e500000041000015
 15171717171717171717d5151717171515151515151515151515151515151515250000006686f5000000c6d7d7d7d61515151515151515151515151515151515
@@ -2717,6 +2868,7 @@ __sfx__
 011700001c55600000000001c556000001d5561d5561d5561c556000001c55600000000001d5561c5561a55618556155560000015556000001555600000155561f556000001c556000001c5561c5560000000000
 011700001c05600000000001c056000001d0561d0561d0561c056000001c05600000000001d0561c0561a05618056150560000015056000001505600000150561f056000001c056000001c0561c0560000000000
 000300001c7131c7131c7231c7231c7331c7331c7431c7531f7632277323700000001670216702000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000900000e6000e6000d6000d6000d6002a1002610023100201001d1001b100260002700027000280002b0002c0002c00029000000002a0002a0002b000000000000000000000000000000000000000000000000
 __music__
 01 0a4b4344
 00 0a0b4344
