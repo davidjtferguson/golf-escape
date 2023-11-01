@@ -85,7 +85,7 @@ end
 function _update60()
  currentupdate()
   
- --debug=stat(7)..".."..stat(1)
+ debug=stat(7)..".."..stat(1)
 end
 
 function updateplaying()
@@ -98,19 +98,6 @@ function updateplaying()
 
  if not pausecontrols then
   handleswinginput()
- end
-
- --avoid calling if possible
- -- for performance
- if currentupdate==updateplaying
-    --[[and (btn(⬅️) or
-    btn(➡️) or
-    abs(av.xvel)>0 or
-    abs(av.yvel)>0 or
-    swing.force>swing.lowf or
-    av.hook or
-    lvlhasmovinghooks)]] then
-  updateaim()
  end
 
  --collision
@@ -307,6 +294,19 @@ function updateplaying()
  updateanims()
  
  updateparticleeffects() --tab 6
+ 
+ --do last to know how much
+ -- cpu space is left
+ if currentupdate==updateplaying and
+    (btn(⬅️) or
+    btn(➡️) or
+    abs(av.xvel)>0 or
+    abs(av.yvel)>0 or
+    swing.force>swing.lowf or
+    av.hook or
+    lvlhasmovinghooks) then
+  updateaim()
+ end
 end
 
 function handleswinginput()
@@ -574,7 +574,7 @@ function avwallscollision()
     
     av.canswing=true
 	
-    --updateaim()
+    updateaim()
 
     sfx(8)
    end
@@ -1564,33 +1564,38 @@ function updateaim()
 
    updatemovement(aim)
 
-   resethurtbox(aim)
+   --if we're running out of cpu,
+   -- don't check every position.
+   if stat(1)<0.5 or stat(1)>=0.5 and #aim.points%3==0 then
+    resethurtbox(aim)
 
-   --simulate av collision
-   if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
-    wallhit=true
-    aim.hitdeath=true
-   end
+    --simulate av collision
+    if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
+     wallhit=true
+     aim.hitdeath=true
+    end
 
-   if groundcol(aim,0,aim.yvel,0) or
-      topcol(aim,0,aim.yvel,0) or
-      leftcol(aim,aim.xvel,aim.yvel,0) or
-      rightcol(aim,aim.xvel,aim.yvel,0) or
-	     #aim.points>100 then
-	   wallhit=true
-	  end
-   
-   --Don't check every point against hooks
-   -- because of performance issues.
-   -- not ideal.
-   if #aim.points%3==0 then
-    for h in all(hooks) do
-     --aim count is hack to prevent collision with hook
-     -- while av is on hook.
-     -- would be cleaner to simulate 'active' behaviour
-     -- but hold off and see if we need to.
-     if circlecollision(aim,h) and #aim.points>2 then
-      wallhit=true
+    if groundcol(aim,0,aim.yvel,0) or
+       topcol(aim,0,aim.yvel,0) or
+       leftcol(aim,aim.xvel,aim.yvel,0) or
+       rightcol(aim,aim.xvel,aim.yvel,0) or
+       #aim.points>80 then
+     wallhit=true
+    end
+    
+    --Don't check every point against hooks,
+    -- and stop checking if out of cpu budget
+    -- because of performance issues.
+    -- not ideal.
+    if #aim.points>2 and #aim.points%3==0 and stat(1)<0.3 then
+     for h in all(hooks) do
+      --aim count is hack to prevent collision with hook
+      -- while av is on hook.
+      -- would be cleaner to simulate 'active' behaviour
+      -- but hold off and see if we need to.
+      if circlecollision(aim,h) then
+       wallhit=true
+      end
      end
     end
    end
@@ -2182,7 +2187,7 @@ function updatetransition()
 end
 
 function backtoplaying()
- --updateaim()
+ updateaim()
  currentupdate=updateplaying
  currentdraw=drawplaying
  pausecontrols=false
@@ -2662,7 +2667,7 @@ d5d5d4e400000000000000f700c6d5151500000000000003b71560000000001500000000000000a5
 2503330000000000000003360000c7d5150000000000000000000077777777151526000067778700000000667686c51525000000000000000000000000000005
 25000000000000000000000000000005150000000000000003b7b715009000150000009696969696969696969600000025000000000000052500000044545415
 25000000000000c4d4d7d43613901305150000000000000000000077777777152500000047579700000000677787c51515650000000000000000350031000415
-15240000000000000000000000000415150031000300030000b7b715030003159400009696969696809696969600a40025000000000000052600000000000015
+15240000000000000000000000000415150000000300030000b7b715030003159400009696969696809696969600a40025000000000000052600000000000015
 25000031000000f6f700f63603600305155100310000d5d5d5d5d5d5d5d5d51525000000000000000000f5475797c51515151724d4d4d4d4d4d4151717171515
 1515240051000000000000000004151515151515b7b7b7b7b7b7b71500600015959595959595959595959595959595952500003100000005e500000041000015
 15171717171717171717d5151717171515151515151515151515151515151515250000006686f5000000c6d7d7d7d61515151515151515151515151515151515
@@ -2864,7 +2869,7 @@ __map__
 510000000000000000005f6667685f5151000000000000000076780976785c5151000000000000060000005f00474746006f00006f000000006f005f00150050520000006300000000200000000060515100000000007b7b00005151000000515248484800005858584848480000000000005d0000006d6d5151510000005d50
 510000000000000000006f7677786f5151000000000000000074790074795c51514747465f0047474600006f00006f00006f00006f005f00006f005c4771577b51717171520000000000000000000050510035000000007b3500515100007b515200000000000000000000000000004848484800000000000000000000005d50
 510000130000000000006f7475796f5151000015000000004c4d4d4d4d4d5d51510000006f00006f00004c5d4e006f004c5d4e006f4c5e004c5d4d5d7b7b5d7b51515151620000000000000000000050510030000000007b307b5151000000515200000000060000000000000000000000000000000000000000000000005d50
-515151515151515151515d4d4d4d5d5151515151515151515151515151515151514d4d4d5d4d4d5d4d4d5d7b5d4d5d4d5d7b5d4d5d5d5d4d5d7b7b7b5d5d7b5d62000000000000000000000000000050510000000600007b7b51000000000051515d5d5d5151515d5d4848485d5d4848484848484848484848485d5d57575d51
+515151515151515151515d4d4d4d5d5151515151515151515151515151515151514d4d4d5d4d4d5d4d4d5d7b5d4d5d4d5d7b5d4d5d5d5d4d5d7b7b7b5d5d7b5d62000000000000000000000000000050510000000613007b7b51000000000051515d5d5d5151515d5d4848485d5d4848484848484848484848485d5d57575d51
 __sfx__
 050400003374328723107150070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703007030070300703
 01020000036600c660275501b05017050150500f7500c750006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600
