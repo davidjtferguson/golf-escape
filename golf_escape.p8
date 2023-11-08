@@ -31,7 +31,7 @@ function _init()
  factoryx,factoryy=768,256
  --vars
 
- pausecontrols=false
+ pausecontrols,pausecamera=false,false
  endingtransition=false
 
  --checkpoint
@@ -292,7 +292,10 @@ function updateplaying()
   updateav()
  end
 
- updatecamera()
+ if not pausecamera then
+  updatecamera()
+ end
+
  updatecorpses()
 
  updateanims()
@@ -2089,6 +2092,7 @@ function initlvlend()
  currentdraw=drawlvlend
 
  pausecontrols=true
+ pausecamera=true
  av.dancing=true
 end
 
@@ -2188,6 +2192,8 @@ function updatetransition()
  --once circle fills screen, move to next currcol
  if transition.cir.r>160 then
  
+  pausecamera=false
+
   if transition.currcol<=#transition.cols then
    --move to the next colour
    transition.cir=resettransitioncir()
