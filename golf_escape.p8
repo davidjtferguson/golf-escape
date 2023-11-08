@@ -2100,18 +2100,25 @@ function updatelvlend()
   totalswingcount+=lvlswingcount
   lvlswingcount=0
 
-  inittransition({0},backtoplaying)
+  inittransition({0},backtoplaying,nextlevel)
  end
 
  --reset level
  if btn(⬅️) and btn(❎) then
+  inittransition({5,0},backtoplaying,resetcurrlvl)
+ end
+end
+
+function resetcurrlvl()
   lvlswingcount=0
   
+  --is duplicated could use function
   if currlvl.haskey then
    currlvl.exit.s=21
    currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
   end
 
+  --is duplicated-could use function
   if not isspawn(xcp,ycp) then
     mset(xcp,ycp,6)
   end  
@@ -2120,10 +2127,6 @@ function updatelvlend()
   ycp=currlvl.yspawn
   
   resetav()
-
-  --could have transition for this?
-  backtoplaying()
- end
 end
 
 function drawlvlend()
@@ -2148,18 +2151,19 @@ function drawlvlend()
   (cam.x*128)+hw(s),(cam.y*128)+64,c1,c2)
 end
 
-function inittransition(cols,resumefunc)
+function inittransition(cols,resumefunc,nextstatefunc)
  currentupdate=updatetransition
  currentdraw=drawtransition
 
- transition=resettransition(cols,resumefunc)
+ transition=resettransition(cols,resumefunc,nextstatefunc)
 end
 
-function resettransition(cols,resumefunc)
+function resettransition(cols,resumefunc,nextstatefunc)
  local t={
   currcol=1,
   cols=cols,
   resumefunc=resumefunc,
+  nextstatefunc=nextstatefunc,
  }
  t.cir=resettransitioncir()
  return t
@@ -2196,7 +2200,7 @@ function updatetransition()
     transition.resumefunc()
     return
    else
-    nextlevel()
+    transition.nextstatefunc()
    end
   end
   
@@ -2284,7 +2288,7 @@ function initending()
 
  -- go through greyscale colours expanding from top
  -- until on white, then initfade
- inittransition({0,5,6,7},backtoending)
+ inittransition({0,5,6,7},backtoending,nextlevel)
 end
 
 function backtoending()
