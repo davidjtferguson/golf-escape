@@ -28,6 +28,7 @@ function _init()
  -- state
  squishpause=4
  
+ factoryx,factoryy=768,256
  --vars
 
  pausecontrols=false
@@ -176,7 +177,7 @@ function updateplaying()
     
   av.hook=h
   elseif not circlecollision(av,h) and
-          h.active==false then
+         h.active==false then
    h.active=true
   end
  end
@@ -374,7 +375,7 @@ function _draw()
 
  print(debug,cam.xfree*128,cam.yfree*128,7)
  
- print(debug,6*128,2*128,7)
+ print(debug,factoryx,factoryy,7)
 end
 
 function drawplaying()
@@ -397,19 +398,7 @@ function drawplaying()
   drawtutorialtext()
  end
 
- --lvl objs draw
- -- if we're outside the factory
- -- draw red corners
- -- otherwise,transparent
- -- (pretty overkill to save one sprite, will probably change)
- if currlvl.xmap==6 and currlvl.ymap==2 then
-  palt(0,false)
-  pal(0,8)
- end
- 
  drawobj(currlvl.exit)
- 
- pal()
  
  if currlvl.haskey then
   spr(currlvl.key.anim.sprite,
@@ -499,7 +488,6 @@ function drawaim()
   linecol=6
  end
  
- --todo:consider look. lines?
  for point in all(aim.points) do
   pset(
    (av.w/2+point.x)*8,
@@ -543,10 +531,8 @@ end
 function drawfactory()
  cls(12)
 
- xmap,ymap=6,2
- 
- map(xmap*16,ymap*16,xmap*128,ymap*128,16,16)
- camera(xmap*128,ymap*128)
+ map(96,32,factoryx,factoryy,16,16)
+ camera(factoryx,factoryy)
 end
 
 -->8
@@ -644,12 +630,12 @@ function avwallscollision()
   end
 	else --on ground
 	 if allleftcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
+	  --should move av to wall but w/e
 	  av.xvel=0
 	 end
  
 	 if allrightcol(av,av.xvel,0,0) then
-	  --todo:move av to wall?
+	  --should move av to wall but w/e
 	  av.xvel=0
 	 end
  end
@@ -664,11 +650,12 @@ function allcol(box,xvel,yvel,flag)
  return checkallflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
 end
 
+function getcollisionpoints(box,xvel,yvel)
+ return box.x+xvel,box.y+yvel,box.w,box.h
+end
+
 function groundcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y+h,flag) or
@@ -676,10 +663,7 @@ function groundcol(box,xvel,yvel,flag)
 end
 
 function allgroundcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y+h,flag) and
@@ -687,9 +671,7 @@ function allgroundcol(box,xvel,yvel,flag)
 end
 
 function leftcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y,flag) or
@@ -697,9 +679,7 @@ function leftcol(box,xvel,yvel,flag)
 end
 
 function allleftcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y,flag) and
@@ -707,10 +687,7 @@ function allleftcol(box,xvel,yvel,flag)
 end
 
 function rightcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x+w,y,flag) or
@@ -718,10 +695,7 @@ function rightcol(box,xvel,yvel,flag)
 end
 
 function allrightcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
- local h=box.h
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x+w,y,flag) and
@@ -729,9 +703,7 @@ function allrightcol(box,xvel,yvel,flag)
 end
 
 function topcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y,flag) or
@@ -739,9 +711,7 @@ function topcol(box,xvel,yvel,flag)
 end
 
 function alltopcol(box,xvel,yvel,flag)
- local x=box.x+xvel
- local y=box.y+yvel
- local w=box.w
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
  return
   checkflag(x,y,flag) and
@@ -859,6 +829,7 @@ function checkallflagarea(x,y,w,h,flag)
 end
 
 function checkflag(x,y,flag)
+ --only for checkpoints :/
  xhitblock,yhitblock=flr(x),flr(y)
  
  local s=mget(x,y)
@@ -900,47 +871,46 @@ function initlevels()
  -- find the enterance 
  lvls={
   --controls tutorial
-  --{xmap=4,ymap=1,w=1,h=2},
+  {xmap=4,ymap=1,w=1,h=2},
   
   --bunkers
   --bunker tutorial
-  --{xmap=0,ymap=0,w=1,h=1},
+  {xmap=0,ymap=0,w=1,h=1},
   --bunker tutorial 2
-  --{xmap=1,ymap=0,w=1,h=1},
+  {xmap=1,ymap=0,w=1,h=1},
   --static swing power test
-  --{xmap=3,ymap=2,w=1,h=1},
+  {xmap=3,ymap=2,w=1,h=1},
 
   --belts intro
   --convayer belts
-  --{xmap=3,ymap=3,w=1,h=1},
+  {xmap=3,ymap=3,w=1,h=1},
   --belt maze (to be re-done)
-  --{xmap=6,ymap=1,w=2,h=1},
+  {xmap=6,ymap=1,w=2,h=1},
   --convayers and bunkers
-  --{xmap=2,ymap=1,w=2,h=1},
+  {xmap=2,ymap=1,w=2,h=1},
 
   --slows intro
   --slows tutorial
-  --{xmap=6,ymap=0,w=1,h=1},
+  {xmap=6,ymap=0,w=1,h=1},
   --wide slows (redo)
-  --{xmap=0,ymap=1,w=2,h=1},
+  {xmap=0,ymap=1,w=2,h=1},
   --float zone 3x3
-  --{xmap=7,ymap=0,w=1,h=1},
+  {xmap=7,ymap=0,w=1,h=1},
   --float climb
-  --{xmap=2,ymap=2,w=1,h=2},
+  {xmap=2,ymap=2,w=1,h=2},
 
   --hooks intro
   --moving hooks (redo)
-  --{xmap=1,ymap=3,w=1,h=1},
+  {xmap=1,ymap=3,w=1,h=1},
   --hook maze newer
-  --{xmap=2,ymap=0,w=1,h=1},
+  {xmap=2,ymap=0,w=1,h=1},
   --mover hooks horizontal
-  --{xmap=3,ymap=0,w=1,h=1},
+  {xmap=3,ymap=0,w=1,h=1},
   --hook maze older
   {xmap=0,ymap=3,w=1,h=1},
   --mover hooks horiz&vert
-  -- (could redo since ideas
-  -- are in other levels?)
-  --{xmap=0,ymap=2,w=1,h=1},
+  -- (redo)
+  {xmap=0,ymap=2,w=1,h=1},
   --tall moving hooks climb
   {xmap=5,ymap=1,w=1,h=2},
   --both hook types (redo)
@@ -1019,14 +989,14 @@ function resetav()
 end
 
 function resethurtbox(obj)
- local xoff=pixel*1
- local yoff=pixel*1
+ local xoff=pixel
+ local yoff=pixel
  
  obj.hurtbox={
   x=obj.x+xoff,
   y=obj.y+yoff,
-  w=pixel*1,
-  h=pixel*1,
+  w=pixel,
+  h=pixel,
  }
 end
 
@@ -1130,7 +1100,6 @@ function createhook(x,y)
  if checkflag(x,y,0) then
   h.typ="mover"
   h.s+=16
-  --lvlhasmovinghooks=true
  end
  
  h.spawns=h.s
@@ -1172,8 +1141,6 @@ function createcorpse(x,y)
 end
 
 function nextlevel()
- --lvlhasmovinghooks=false
-
  lvls.currlvlno+=1
  
  if lvls.currlvlno>#lvls then
@@ -1275,7 +1242,6 @@ end
 --update logic
 
 function updateav()
-
  if av.respawnstate=="alive" then
   if av.canswing then
    av.xflip=swing.xvec<0
@@ -1379,7 +1345,6 @@ function updatecamera()
    end
 
    if currlvl.w>1 then
-    --todo:have short accel
     cam.xfree-=cammovespeed
     
     if cam.xfree<cam.x and cam.freedirect=="down" then
@@ -1434,7 +1399,6 @@ function updatecamera()
  cam.yfree=camera1dbounds(cam.yfree,currlvl.ymap,currlvl.h)
 
  camera(cam.xfree*128,cam.yfree*128)
- --camera(cam.xfree*128,(av.y/16)*128-32)
  
  if cam.free then
   cam.arrowcounter+=1
@@ -1492,8 +1456,7 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 				cameradest=lvlpos+lvllength-1
 			end
 
- 
-  lcam=movetopoint(lcam,cameradest)
+   lcam=movetopoint(lcam,cameradest)
 
 		else --can't swing
 			--camera only moves if
@@ -1592,12 +1555,9 @@ function updateaim()
     -- and stop checking if out of cpu budget
     -- because of performance issues.
     -- not ideal.
+    --aim count is hack to prevent collision with hook when on hook
     if #aim.points>2 and #aim.points%3==0 and stat(1)<0.3 then
      for h in all(hooks) do
-      --aim count is hack to prevent collision with hook
-      -- while av is on hook.
-      -- would be cleaner to simulate 'active' behaviour
-      -- but hold off and see if we need to.
       if circlecollision(aim,h) then
        wallhit=true
       end
@@ -1677,7 +1637,6 @@ function hookreleaseav(hook)
 
  hook.avon=false
  
- --remove reference
  av.hook=nil
 end
 
@@ -2005,7 +1964,11 @@ function drawstartscreen()
  if av.colstate=="ground" then
   s="i must save the worms!"
   outline(s,
-   (6*128)+hw(s),(2*128)+40,0,7)
+   factoryx+hw(s),factoryy+48,0,7)
+
+  s="press any button"
+  outline(s,
+   factoryx+hw(s),factoryy+72,0,7)
  end
 end
 
@@ -2329,27 +2292,27 @@ function drawending()
  
  s="i must save the worms!"
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits,c1,c2)
+  factoryx+hw(s),factoryy+ycredits,c1,c2)
  
  s="by davbo"
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+8,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+8,c1,c2)
  
  s="with help from rory and polly"
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+16,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+16,c1,c2)
  
  s="deaths: "..deathcount
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+24,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+24,c1,c2)
 
  s="swings: "..swingcount
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+32,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+32,c1,c2)
 
   s="levels skipped: "..lvlsskipped
   outline(s,
-   (cam.x*128)+hw(s),(cam.y*128)+ycredits+40,c1,c2)
+   factoryx+hw(s),factoryy+ycredits+40,c1,c2)
 
  s="playtime: "..
  twodigit(hours)..":"..
@@ -2357,11 +2320,11 @@ function drawending()
  twodigit(seconds).."."..
  twodigit(frames)
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+48,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+48,c1,c2)
 
  s="thanks for playing!"
  outline(s,
-  (cam.x*128)+hw(s),(cam.y*128)+ycredits+56,c1,c2)
+  factoryx+hw(s),factoryy+ycredits+56,c1,c2)
 end
 
 function twodigit(val)
