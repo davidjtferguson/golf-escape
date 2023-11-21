@@ -361,9 +361,7 @@ function handleswinginput()
   
   if swing.currdecaypause==0 and
      swing.force>swing.lowf then
-   
    swing.decay+=swing.decayvel
-   
    swing.force-=swing.decay
   end
   
@@ -648,17 +646,28 @@ function avwallscollision()
  end
 end
 
---allcollision
+function getcollisionpoints(box,xvel,yvel)
+ return box.x+xvel,box.y+yvel,box.w,box.h
+end
+
 function anycol(box,xvel,yvel,flag)
- return checkanyflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
+
+ return
+  checkflag(x,y,flag) or
+  checkflag(x+w,y,flag) or
+  checkflag(x,y+h,flag) or
+  checkflag(x+w,y+h,flag)
 end
 
 function allcol(box,xvel,yvel,flag)
- return checkallflagarea(box.x+xvel,box.y+yvel,box.w,box.h,flag)
-end
+ local x,y,w,h=getcollisionpoints(box,xvel,yvel)
 
-function getcollisionpoints(box,xvel,yvel)
- return box.x+xvel,box.y+yvel,box.w,box.h
+ return
+  checkflag(x,y,flag) and
+  checkflag(x+w,y,flag) and
+  checkflag(x,y+h,flag) and
+  checkflag(x+w,y+h,flag)
 end
 
 function groundcol(box,xvel,yvel,flag)
@@ -817,22 +826,6 @@ function distanceinwall(box,checkx,checky,direction,colfunc)
  end
 
  return distanceinwall
-end
-
-function checkanyflagarea(x,y,w,h,flag)
- return
-  checkflag(x,y,flag) or
-  checkflag(x+w,y,flag) or
-  checkflag(x,y+h,flag) or
-  checkflag(x+w,y+h,flag)
-end
-
-function checkallflagarea(x,y,w,h,flag)
- return
-  checkflag(x,y,flag) and
-  checkflag(x+w,y,flag) and
-  checkflag(x,y+h,flag) and
-  checkflag(x+w,y+h,flag)
 end
 
 function checkflag(x,y,flag)
