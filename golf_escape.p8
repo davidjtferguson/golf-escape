@@ -92,7 +92,7 @@ end
 function _update60()
  currentupdate()
   
- debug=stat(7)..".."..stat(1)..".."..#aim.points
+ --debug=stat(7)..".."..stat(1)..".."..#aim.points
 end
 
 function updateplaying()
@@ -1009,12 +1009,12 @@ end
 function resetswing()
  swing={
   --consts
-  lowf=0.205,
+  lowf=0.212,
   highf=0.45,
   btnf=0.04,
   lowrotangle=1/1200,
   highrotangle=1/300,
-  rotanglevel=1/3600,
+  rotanglevel=1/4500,
   basedecay=0.00005,
   decayvel=0.000035,
   decaypause=16,
