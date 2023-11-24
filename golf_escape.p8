@@ -67,15 +67,16 @@ function _init()
  
  makebackgrounds()
  
- --[[
+ --
  currentupdate=updateplaying
  currentdraw=drawplaying
  
  initlevels()
  menuitem(1,"skip level", skiplvl)
+ music(7)
  --]]
 
- initstartscreen()
+ --initstartscreen()
 
  aim={
   points={}
@@ -886,7 +887,7 @@ function initlevels()
 
   --belts intro
   --convayer belts
-  --{xmap=3,ymap=3,w=1,h=1},
+  {xmap=3,ymap=3,w=1,h=1},
   --convayers and bunkers
   --{xmap=2,ymap=1,w=2,h=1},
   --belt maze
@@ -906,7 +907,7 @@ function initlevels()
   --tall moving hooks climb
   --{xmap=5,ymap=1,w=1,h=2},
   --both hook types (redo)
-  {xmap=4,ymap=0,w=2,h=1},
+  --{xmap=4,ymap=0,w=2,h=1},
 
   --slows intro
   --slows tutorial
@@ -1163,8 +1164,8 @@ function nextlevel()
  currlvl.haskey=false
  
  --scan area for level game objects
- for x=(16*currlvl.xmap),(16*currlvl.xmap)+(16*currlvl.w) do
-  for y=(16*currlvl.ymap),(16*currlvl.ymap)+(16*currlvl.h) do
+ for x=(16*currlvl.xmap),(16*currlvl.xmap)+(16*currlvl.w)-1 do
+  for y=(16*currlvl.ymap),(16*currlvl.ymap)+(16*currlvl.h)-1 do
 
 		 --load this lvls bumpers and hooks
 		 if checkflag(x,y,0) and
