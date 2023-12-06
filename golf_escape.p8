@@ -1076,36 +1076,24 @@ function createhook(x,y)
  
  if checkflag(x,y,4) and
     checkflag(x,y,5) then
-  h.yvel=-diaghookspeed
-  h.xvel=diaghookspeed
-  h.s=34
+  h.xvel,h.yvel,h.s=diaghookspeed,-diaghookspeed,34
  elseif checkflag(x,y,5) and
         checkflag(x,y,6) then
-  h.yvel=diaghookspeed
-  h.xvel=diaghookspeed
-  h.s=36
+  h.xvel,h.yvel,h.s=diaghookspeed,diaghookspeed,36
  elseif checkflag(x,y,6) and
         checkflag(x,y,7) then
-  h.yvel=diaghookspeed
-  h.xvel=-diaghookspeed
-  h.s=38
+  h.xvel,h.yvel,h.s=-diaghookspeed,diaghookspeed,38
  elseif checkflag(x,y,7) and
         checkflag(x,y,4) then
-  h.yvel=-diaghookspeed
-  h.xvel=-diaghookspeed
-  h.s=40
+  h.xvel,h.yvel,h.s=-diaghookspeed,-diaghookspeed,40
  elseif checkflag(x,y,4) then
-  h.yvel=-hookspeed
-  h.s=33
+  h.yvel,h.s=-hookspeed,33
  elseif checkflag(x,y,5) then
-  h.xvel=hookspeed
-  h.s=35
+  h.xvel,h.s=hookspeed,35
  elseif checkflag(x,y,6) then
-  h.yvel=hookspeed
-  h.s=37
+  h.yvel,h.s=hookspeed,37
  elseif checkflag(x,y,7) then
-  h.xvel=-hookspeed
-  h.s=39
+  h.xvel,h.s=-hookspeed,39
  else
   h.typ="still"
  end
