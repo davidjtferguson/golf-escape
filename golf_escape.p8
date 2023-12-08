@@ -572,8 +572,7 @@ function avwallscollision()
 
     av.colstate="ground"  
     
-    av.xvel=0
-    av.yvel=0
+    av.xvel,av.yvel=0,0
     
     av.canswing=true
 	
@@ -643,12 +642,7 @@ function avwallscollision()
    end
   end
 	else --on ground
-	 if allleftcol(av,av.xvel,0,0) then
-	  --should move av to wall but w/e
-	  av.xvel=0
-	 end
- 
-	 if allrightcol(av,av.xvel,0,0) then
+	 if allleftcol(av,av.xvel,0,0) or allrightcol(av,av.xvel,0,0) then
 	  --should move av to wall but w/e
 	  av.xvel=0
 	 end
