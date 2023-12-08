@@ -207,8 +207,7 @@ function updateplaying()
    if currlvl.haskey and
       currlvl.key.collected and
       not currlvl.key.saved then
-    currlvl.exit.s=21
-    currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
+    dropkey()
    end
   end
  end
@@ -228,11 +227,7 @@ function updateplaying()
    if xcp!=xhitblock or
       ycp!=yhitblock then
 
-    --clear old cp
-    -- if not spawn
-    if not isspawn(xcp,ycp) then
-     mset(xcp,ycp,6)
-    end
+    resetpreviouscheckpoint()
     
     --set new cp
     sfx(6)
@@ -789,7 +784,7 @@ function distancetowall(box,checkx,checky,direction,colfunc,topcheck)
   -- something's wrong. abort.
   -- (hack - ideally would never occur)
   if abs(distancetowall)>1 then
-   debug="collision hack hit!"
+   --debug="collision hack hit!"
    return distancetowall
   end
 
@@ -834,7 +829,7 @@ function distanceinwall(box,checkx,checky,direction,colfunc)
  local distanceinwall=0
 
  while colfunc
- (box,distanceinwall*checkx,
+      (box,distanceinwall*checkx,
       distanceinwall*checky,0) do
   distanceinwall+=(pixel*direction)
  end
@@ -850,9 +845,9 @@ function checkflag(x,y,flag)
  return fget(s,flag)
 end
 
-function checkflagclean(x,y,flag)
+function checkflaggroup(x,y,flagtotal)
  local s=mget(x,y)
- return fget(s,flag)
+ return fget(s)==flagtotal
 end
 
 -- https://stackoverflow.com/questions/345838/ball-to-ball-collision-detection-and-handling
@@ -1074,17 +1069,13 @@ function createhook(x,y)
   yvel=0,
  }
  
- if checkflag(x,y,4) and
-    checkflag(x,y,5) then
+ if checkflaggroup(x,y,57) then --0+3+4+5
   h.xvel,h.yvel,h.s=diaghookspeed,-diaghookspeed,34
- elseif checkflag(x,y,5) and
-        checkflag(x,y,6) then
+ elseif checkflaggroup(x,y,105) then -- 0+3+5+6
   h.xvel,h.yvel,h.s=diaghookspeed,diaghookspeed,36
- elseif checkflag(x,y,6) and
-        checkflag(x,y,7) then
+ elseif checkflaggroup(x,y,201) then -- 0+3+6+7
   h.xvel,h.yvel,h.s=-diaghookspeed,diaghookspeed,38
- elseif checkflag(x,y,7) and
-        checkflag(x,y,4) then
+ elseif checkflaggroup(x,y,153) then -- 0+3+4+7
   h.xvel,h.yvel,h.s=-diaghookspeed,-diaghookspeed,40
  elseif checkflag(x,y,4) then
   h.yvel,h.s=-hookspeed,33
@@ -1099,15 +1090,11 @@ function createhook(x,y)
  end
  
  if checkflag(x,y,0) then
- 
-  lvlhasmovinghooks=true
-  h.typ="mover"
+  lvlhasmovinghooks,h.typ=true,"mover"
   h.s+=16
  end
  
- h.spawns=h.s
- h.spawnxvel=h.xvel
- h.spawnyvel=h.yvel
+ h.spawns,h.spawnxvel,h.spawnyvel=h.s,h.xvel,h.yvel
 
  add(hooks,h)
 end
@@ -1171,11 +1158,8 @@ function nextlevel()
   for y=(16*currlvl.ymap),(16*currlvl.ymap)+(16*currlvl.h)-1 do
 
 		 --load this lvls bumpers and hooks
-		 if checkflag(x,y,0) and
-		    checkflag(x,y,4) and
-		    checkflag(x,y,5) and
-		    checkflag(x,y,6) and
-		    checkflag(x,y,7) then
+   -- 0+4+5+6+7
+		 if checkflaggroup(x,y,241) then
 		  createbumper(x,y)
 		  mset(x,y,0)
 		 end
@@ -1185,32 +1169,28 @@ function nextlevel()
 		  mset(x,y,0)
 		 end
 		 
-   if checkflag(x,y,1) and
-      checkflag(x,y,7) then
+   -- 1+7
+   if checkflaggroup(x,y,130) then
     --found spawn
-    currlvl.xspawn=x
-    currlvl.yspawn=y
+    currlvl.xspawn,currlvl.yspawn=x,y
 
-    xcp=x
-    ycp=y
+    xcp,ycp=x,y
     
     resetav()
    end
    
-   if checkflag(x,y,4) and
-      checkflag(x,y,7) then
+   -- 4+7
+   if checkflaggroup(x,y,144) then
     --found key
     currlvl.haskey=true
     
     currlvl.key=resetkey(x,y)
     
-    --could we avoid this
-    -- so levels can repeat?
     mset(x,y,0)
    end
 
-   if checkflag(x,y,5) and
-      checkflag(x,y,7) then
+   -- 5+7
+   if checkflaggroup(x,y,160) then
     --found exit
     currlvl.exit={
      x=x,
@@ -1665,12 +1645,6 @@ function hookreleaseav(hook)
  av.hook=nil
 end
 
-function isspawn(x,y)
- return
-  checkflagclean(xcp,ycp,1) and
-  checkflagclean(xcp,ycp,7)
-end
-
 function updatebackgrounds()
  bg.x+=bg.xvel
  bg.y+=bg.yvel
@@ -1901,7 +1875,7 @@ function updateanims()
   updateanimt(currlvl.key.anim)
  end
  
- if not isspawn(xcp,ycp) then
+ if not checkflaggroup(xcp,ycp,130) then
   mset(xcp,ycp,cpanim.sprite)
  end
 end
@@ -2165,21 +2139,28 @@ end
 function resetcurrlvl()
   lvlswingcount=0
   
-  --is duplicated could use function
   if currlvl.haskey then
-   currlvl.exit.s=21
-   currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
+   dropkey()
   end
 
-  --is duplicated-could use function
-  if not isspawn(xcp,ycp) then
-    mset(xcp,ycp,6)
-  end  
+  resetpreviouscheckpoint()
 
-  xcp=currlvl.xspawn
-  ycp=currlvl.yspawn
+  xcp,ycp=currlvl.xspawn,currlvl.yspawn
   
   resetav()
+end
+
+function dropkey()
+   currlvl.exit.s=21
+   currlvl.key=resetkey(currlvl.key.spawnx,currlvl.key.spawny)
+end
+
+function resetpreviouscheckpoint()
+  --clear old cp
+  -- if not spawn
+  if not checkflaggroup(xcp,ycp,130) then
+    mset(xcp,ycp,6)
+  end  
 end
 
 function drawlvlend()
