@@ -3,7 +3,7 @@ version 41
 __lua__
 
 function _init()
- frame=0
+ frames=0
  
  --[[
  sp=0
@@ -21,29 +21,31 @@ function _init()
 end
 
 function _update()
- frame+=1
+ frames+=1
  
- if frame==30 then
-	 sp=17
-	 addr=512*(sp\16)+4*(sp%16)
+ scrollarea(17,30,2,8,1,0,direction)
+
+ if frames==60 then
+	 -- sp=17
+	 -- addr=512*(sp\16)+4*(sp%16)
 	 
 	 --pixelshiftverboseupwards()
 
-  --save row 8
-	 memcpy(backupaddr2,addr+(64*7),4)
+  -- --save row 8
+	 -- memcpy(backupaddr2,addr+(64*7),4)
 
-  --save row 8 to set buffers up
-  memcpy(backupaddr2,addr+(64*7),4)
+  -- --save row 8 to set buffers up
+  -- memcpy(backupaddr2,addr+(64*7),4)
   
-  pixelshift(addr+(64*6),addr+(64*5))
+  -- pixelshift(addr+(64*6),addr+(64*5))
   
-  pixelshift(addr+(64*4),addr+(64*3))
+  -- pixelshift(addr+(64*4),addr+(64*3))
   
-  pixelshift(addr+(64*2),addr+(64*1))
+  -- pixelshift(addr+(64*2),addr+(64*1))
   
-  pixelshift(addr+(64*0),addr+(64+7))
+  -- pixelshift(addr+(64*0),addr+(64+7))
 
-	 memcpy(addr+(64*7),backupaddr1,4)
+	 -- memcpy(addr+(64*7),backupaddr1,4)
 
   -- sp=18
   -- addr=512*(sp\16)+4*(sp%16)
@@ -61,23 +63,60 @@ function _update()
   -- pixelshift(addr+(64*7),addr)
    
 
-	 frame=0
+	 frames=0
  end
 end
 
-function pixelshift(addr1,addr2)
- --save row 1
- memcpy(backupaddr1,addr1,4)
+function scrollarea(spr,speed,w,h,woff,hoff,direction)
+ if frames%speed!=0 then
+  return
+ end
+
+ woff=woff or 0
+
+ hoff=hoff or 0
+
+ direction=direction or -1
+
+ addr=(512*(spr\16)+4*(spr%16))+woff
  
- -- write row 0 to row 1
- memcpy(addr1,backupaddr2,4)
+ --save row 8 to set buffers up
+ memcpy(backupaddr2,addr+(64*7),w)
+
+ --memcpy(backupaddr2,addr+(64*7),4)
  
- -- save row 2
- memcpy(backupaddr2,addr2,4)
- 
- -- write row 1 to row 2
- memcpy(addr2,backupaddr1,4)
+ for i=6,0,-2 do
+  pixelshift(addr+(64*i),addr+(64*(i-1)),w)
+ end
+
+ memcpy(addr+(64*7),backupaddr1,w)
 end
+
+-- function pixelshift(addr1,addr2)
+--  --save row 1
+--  memcpy(backupaddr1,addr1,4)
+ 
+--  -- write row 0 to row 1
+--  memcpy(addr1,backupaddr2,4)
+ 
+--  -- save row 2
+--  memcpy(backupaddr2,addr2,4)
+ 
+--  -- write row 1 to row 2
+--  memcpy(addr2,backupaddr1,4)
+-- end
+
+
+function pixelshift(addr1,addr2,w)
+ swap(backupaddr1,backupaddr2,addr1,w)
+ swap(backupaddr2,backupaddr1,addr2,w)
+end
+
+function swap(backupaddr,pastefromaddr,swapaddr,w)
+ memcpy(backupaddr,swapaddr,w)
+ memcpy(swapaddr,pastefromaddr,w)
+end
+
 
 function _draw()
  cls(0)
