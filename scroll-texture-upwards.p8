@@ -27,33 +27,38 @@ function _update()
 	 sp=17
 	 addr=512*(sp\16)+4*(sp%16)
 	 
-	 pixelshiftverboseupwards()
+	 --pixelshiftverboseupwards()
 
-  --  --save row 1 to set buffers up
-  --  memcpy(backupaddr2,addr+(64*7),4)
-   
-  --  pixelshift(addr+(64*6),addr+(64*5))
-   
-  --  pixelshift(addr+(64*4),addr+(64*3))
-   
-  --  pixelshift(addr+(64*2),addr+(64*1))
-   
-  --  pixelshift(addr+(64*0),addr+(64+7))
+  --save row 8
+	 memcpy(backupaddr2,addr+(64*7),4)
 
-  sp=18
-  addr=512*(sp\16)+4*(sp%16)
+  --save row 8 to set buffers up
+  memcpy(backupaddr2,addr+(64*7),4)
+  
+  pixelshift(addr+(64*6),addr+(64*5))
+  
+  pixelshift(addr+(64*4),addr+(64*3))
+  
+  pixelshift(addr+(64*2),addr+(64*1))
+  
+  pixelshift(addr+(64*0),addr+(64+7))
 
-  pixelshiftverbose()
+	 memcpy(addr+(64*7),backupaddr1,4)
 
-  --  memcpy(backupaddr2,addr,4)
-   
-  --  pixelshift(addr+64,addr+(64*2))
-   
-  --  pixelshift(addr+(64*3),addr+(64*4))
-   
-  --  pixelshift(addr+(64*5),addr+(64*6))
-   
-  --  pixelshift(addr+(64*7),addr)
+  -- sp=18
+  -- addr=512*(sp\16)+4*(sp%16)
+
+  -- --pixelshiftverbose()
+
+  -- memcpy(backupaddr2,addr,4)
+  
+  -- pixelshift(addr+64,addr+(64*2))
+  
+  -- pixelshift(addr+(64*3),addr+(64*4))
+  
+  -- pixelshift(addr+(64*5),addr+(64*6))
+  
+  -- pixelshift(addr+(64*7),addr)
    
 
 	 frame=0
@@ -64,13 +69,13 @@ function pixelshift(addr1,addr2)
  --save row 1
  memcpy(backupaddr1,addr1,4)
  
- -- write row 1 to row 2
+ -- write row 0 to row 1
  memcpy(addr1,backupaddr2,4)
  
- -- save row 3
+ -- save row 2
  memcpy(backupaddr2,addr2,4)
  
- -- write row 2 to row 3
+ -- write row 1 to row 2
  memcpy(addr2,backupaddr1,4)
 end
 
