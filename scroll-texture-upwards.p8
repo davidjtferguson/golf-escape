@@ -106,9 +106,14 @@ function scrollarea(spr,speed,w,h,woff,hoff,direction)
  -- h-(1 for last row)-(1 for 0 index)
  --for i=(h-2+hoff)+1,hoff+1,-2 do
  for i=(h-2+hoff),hoff,-2 do
- 
- --for i=6,0,-2 do
-  pixelshift(addr+(64*i),addr+(64*(i-1)),w)
+  --looping case
+  local i2=i-1
+  if i2<hoff then
+   i2=h-1+hoff
+  end
+
+  --for i=6,0,-2 do
+  pixelshift(addr+(64*i),addr+(64*(i2)),w)
  end
 
  -- copy into last row
