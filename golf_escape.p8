@@ -801,8 +801,7 @@ function distancetowall(box,checkx,checky,direction,colfunc,topcheck)
     -- abort wall collision
     -- with top collision
     av.pauseanim="tsquish"
-    av.xpause=squishpause
-    av.ypause=squishpause
+    av.xpause,av.ypause=squishpause,squishpause
     
     topcoloverwrite=true
     --moveavtoroof()
@@ -837,9 +836,10 @@ function checkflag(x,y,flag)
  return fget(s,flag)
 end
 
-function checkflaggroup(x,y,flagtotal)
+function checkflaggroup(x,y,flagtotal,off)
+ local off=off or 0
  local s=mget(x,y)
- return fget(s)==flagtotal
+ return fget(s)==flagtotal or fget(s)==flagtotal+off
 end
 
 -- https://stackoverflow.com/questions/345838/ball-to-ball-collision-detection-and-handling
@@ -1061,13 +1061,13 @@ function createhook(x,y)
   yvel=0,
  }
  
- if checkflaggroup(x,y,57) then --0+3+4+5
+ if checkflaggroup(x,y,56,1) then --(0)+3+4+5
   h.xvel,h.yvel,h.s=diaghookspeed,-diaghookspeed,34
- elseif checkflaggroup(x,y,105) then -- 0+3+5+6
+ elseif checkflaggroup(x,y,104,1) then -- (0)+3+5+6
   h.xvel,h.yvel,h.s=diaghookspeed,diaghookspeed,36
- elseif checkflaggroup(x,y,201) then -- 0+3+6+7
+ elseif checkflaggroup(x,y,200,1) then -- (0)+3+6+7
   h.xvel,h.yvel,h.s=-diaghookspeed,diaghookspeed,38
- elseif checkflaggroup(x,y,153) then -- 0+3+4+7
+ elseif checkflaggroup(x,y,152,1) then -- (0)+3+4+7
   h.xvel,h.yvel,h.s=-diaghookspeed,-diaghookspeed,40
  elseif checkflag(x,y,4) then
   h.yvel,h.s=-hookspeed,33
@@ -1174,10 +1174,8 @@ function nextlevel()
    -- 4+7
    if checkflaggroup(x,y,144) then
     --found key
-    currlvl.haskey=true
-    
-    currlvl.key=resetkey(x,y)
-    
+    currlvl.haskey,currlvl.key=true,resetkey(x,y)
+
     mset(x,y,0)
    end
 
@@ -1188,7 +1186,7 @@ function nextlevel()
      x=x,
      y=y,
      s=20,
-     r=pixel*4,
+     r=0.5, -- pixel*4
     }
 
     mset(x,y,0)
@@ -1208,7 +1206,7 @@ function resetkey(x,y)
   --consts
   spawnx=x,
   spawny=y,
-  r=pixel*4,
+  r=0.5, --pixel*4
   
   --vars
   x=x,
