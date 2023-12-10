@@ -13,24 +13,24 @@ end
 function _update()
  frames+=1
  
- scrollarea(17,30,2,8,1,0,direction)
+ --scrollarea(17,30,2,8,1,0,direction)
 
- scrollarea(18,30,2,4,1,2,direction)
+ --scrollarea(18,30,2,4,1,2,direction)
 
  -- down stream
- scrollarea(65,10,2,8,1,0,1)
+ scrollareaup(65,2,8,1,0,1)
 
  --single square
- scrollarea(127,20,2,4,1,2)
+ scrollareaup(127,2,4,1,2)
 
  --long thin
- scrollarea(124,20,10,4,1,2)
+ scrollareaup(124,10,4,1,2)
  
  --full inner
- scrollarea(123,20,4,8)
+ scrollareaup(123,4,8,0,0)
  
  for s=76,79 do
-  scrollarea(s,20,2,20,1,2)
+  scrollareaup(s,2,20,1,2)
  end
  
  if frames==60 then
@@ -75,26 +75,17 @@ function _update()
  end
 end
 
-function scrollarea(spr,speed,w,h,woff,hoff,direction)
- if frames%speed!=0 then
+function scrollareaup(spr,w,h,woff,hoff)
+ if frames%20!=0 then
   return
  end
-
- woff=woff or 0
-
- hoff=hoff or 0
-
- direction=direction or -1
 
  addr=(512*(spr\16)+4*(spr%16))+woff
  
  --save last row to set buffers up
  memcpy(backupaddr2,addr+(64*(h-1+hoff)),w)
 
- --memcpy(backupaddr2,addr+(64*7),4)
- 
  -- h-(1 for last row)-(1 for 0 index)
- --for i=(h-2+hoff)+1,hoff+1,-2 do
  for i=(h-2+hoff),hoff,-2 do
   --looping case
   local i2=i-1
@@ -102,13 +93,11 @@ function scrollarea(spr,speed,w,h,woff,hoff,direction)
    i2=h-1+hoff
   end
 
-  --for i=6,0,-2 do
   pixelshift(addr+(64*i),addr+(64*(i2)),w)
  end
 
  -- copy into last row
  memcpy(addr+(64*(h-1+hoff)),backupaddr1,w)
-
 end
 
 -- function pixelshift(addr1,addr2)
