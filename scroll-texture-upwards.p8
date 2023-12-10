@@ -5,19 +5,9 @@ __lua__
 function _init()
  frames=0
  
- --[[
- sp=0
- backupaddr1=512*(sp\16)+4*(sp%16)
-
- sp=1
- backupaddr2=512*(sp\16)+4*(sp%16)
- ]]
- 
- --backup to persistent
- -- cart data memory
- backupaddr1=0x5e00
-
- backupaddr2=0x5e10
+ --backup to general use memory
+ backupaddr1=0x4300
+ backupaddr2=0x4310
 end
 
 function _update()
