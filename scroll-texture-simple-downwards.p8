@@ -36,7 +36,7 @@ function scrolltiledown()
 	 --save row 1 to set buffers up
 	 memcpy(backupaddr2,addr,4)
 
-  for i=0,6,2 do
+  for i=1,6,2 do
 	  pixelshift(addr+(64*i),addr+(64*(i+1)),4)
   end
   
