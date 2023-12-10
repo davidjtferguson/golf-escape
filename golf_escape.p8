@@ -32,8 +32,7 @@ function _init()
  endingtransition=false
 
  --checkpoint
- xcp,ycp=0,0
- cpanim=makeanimt(23,10,3)
+ xcp,ycp,cpanim=0,0,makeanimt(23,10,3)
  
  --hack for top corner collision
  topcoloverwrite=false
@@ -61,16 +60,15 @@ function _init()
  
  makebackgrounds()
  
- --
- currentupdate=updateplaying
- currentdraw=drawplaying
+ --[[
+ currentupdate,currentdraw=updateplaying,drawplaying
  
  initlevels()
  menuitem(1,"skip level", skiplvl)
  --music(7)
  --]]
 
- --initstartscreen()
+ initstartscreen()
 
  aim={
   points={}
@@ -86,6 +84,7 @@ function _init()
  --scroll texture effect
  
  backupaddr1,backupaddr2=0x4300,0x4310
+ scrollcounter=0
 end
 
 function _update60()
@@ -168,8 +167,7 @@ function updateplaying()
    av.x=h.x+h.r
    av.y=h.y+h.r+pixel
 
-   av.xvel=0
-   av.yvel=0
+   av.xvel,av.yvel=0,0
 
    av.colstate="hook"
     
@@ -1263,8 +1261,8 @@ function updateav()
    
    --if top of count,
    -- move av to current checkpoint
-   av.x=xcp+pixel*2
-   av.y=ycp+pixel*2
+   av.x=xcp+0.25 --pixel*2
+   av.y=ycp+0.25 --pixel*2
    
    sfx(28)
 
@@ -2103,12 +2101,11 @@ function drawbeginning(isdrawaim)
 end
 
 function initlvlend()
- currentupdate=updatelvlend
- currentdraw=drawlvlend
+ sfx(6)
 
- pausecontrols=true
- pausecamera=true
- av.dancing=true
+ currentupdate,currentdraw=updatelvlend,drawlvlend
+
+ pausecontrols,pausecamera,av.dancing=true,true,true
 end
 
 function updatelvlend()
@@ -2538,8 +2535,7 @@ end
 
 function initcollect(x,y,cols)
  local e=createeffect(updatecollect)
- e.x=x*8
- e.y=y*8
+ e.x,e.y=x*8,y*8
 
  local r=4
  
@@ -2641,31 +2637,34 @@ end
 --scrolling texture effect
 
 function updatescrollingtextures()
+ scrollcounter+=1
 
- --downwards pour
- scrolltiledown()
-
- --single square
- scrollareaup(127,2,4,1,2)
-
- --long thin
- scrollareaup(124,10,4,1,2)
- 
- --full inner
- scrollareaup(123,4,8,0,0)
- 
- for s=76,79 do
-  scrollareaup(s,2,20,1,2)
+ if scrollcounter%10==0 then
+	 --downwards pour
+	 scrolltiledown()
+	end
+	
+	if scrollcounter%30==0 then
+	 --single square
+	 scrollareaup(127,2,4,1,2)
+	
+	 --long thin
+	 scrollareaup(124,10,4,1,2)
+	 
+	 --full inner
+	 scrollareaup(123,4,8,0,0)
+	 
+	 for s=76,79 do
+	  scrollareaup(s,2,20,1,2)
+  end
  end
  
+ if scrollcounter==60 then
+  scrollcounter=0
+ end
 end
 
-
 function scrolltiledown()
- if frames%10!=0 then
-  return
- end
-
  --tile 65 is down pour
  addr=spradd(65)
 
@@ -2684,10 +2683,6 @@ function spradd(sp)
 end
 
 function scrollareaup(sp,w,h,woff,hoff)
- if frames%30!=0 then
-  return
- end
-
  addr=spradd(sp)+woff
  
  --save last row to set buffers up
