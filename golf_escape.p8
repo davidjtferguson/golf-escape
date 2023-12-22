@@ -246,14 +246,18 @@ function updateplaying()
    end
   end
   
-  --float zone (hook trumps float zone)
+  --float zone
   if allcol(av,0,0,6) and
-     av.slowstate=="none" and
-     av.colstate!="hook" then
+     av.slowstate=="none" then
+   --hook trumps float zone
+   if av.colstate=="hook" then
+    av.slowstate="escape"
+   else
    sfx(40)
    av.canswing=true
 
    av.slowstate="in"
+   end
   elseif not allcol(av,0,0,6) and
          av.slowstate!="none" then
    
