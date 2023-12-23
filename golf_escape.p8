@@ -577,6 +577,49 @@ end
 --collision
 
 function avwallscollision()
+ groundcollisioncalculations()
+
+ --other sides col
+ if not groundcol(av,0,av.yvel,0) then
+	 if topcol(av,0,av.yvel,0) then
+	  moveavtoroof()
+	  av.yvel*=-1
+	  
+	  av.pauseanim="tsquish"
+
+	  collisionimpact(av.x+(av.w/2),av.y,
+	   1,0.25,false,avcolours)
+	 else
+   --only check collision for current direction
+   if av.xvel<=0 and leftcol(av,av.xvel,av.yvel,0) then
+    av.pauseanim="lsquish"
+
+    collisionimpact(av.x,av.y+(av.h/2),
+     0.25,1,true,avcolours)
+
+    moveavtoleft()
+    sidebounce()
+   end
+
+   if av.xvel>=0 and rightcol(av,av.xvel,av.yvel,0) then
+    av.pauseanim="rsquish"
+    
+    collisionimpact(av.x+av.w,av.y+(av.h/2),
+     -0.75,1,true,avcolours)
+
+    moveavtoright()
+    sidebounce()
+   end
+  end
+	else --on ground
+	 if allleftcol(av,av.xvel,0,0) or allrightcol(av,av.xvel,0,0) then
+	  --should move av to wall but w/e
+	  av.xvel=0
+	 end
+ end
+end
+
+function groundcollisioncalculations()
  if groundcol(av,0,av.yvel,0) then
   moveavtoground()
   
@@ -632,45 +675,6 @@ function avwallscollision()
   
    av.colstate="air"
    av.canswing=false
-  end
- end
- 
- --other sides col
- if not groundcol(av,0,av.yvel,0) then
-	 if topcol(av,0,av.yvel,0) then
-	  moveavtoroof()
-	  av.yvel*=-1
-	  
-	  av.pauseanim="tsquish"
-
-	  collisionimpact(av.x+(av.w/2),av.y,
-	   1,0.25,false,avcolours)
-	 else
-   --only check collision for current direction
-   if av.xvel<=0 and leftcol(av,av.xvel,av.yvel,0) then
-    av.pauseanim="lsquish"
-
-    collisionimpact(av.x,av.y+(av.h/2),
-     0.25,1,true,avcolours)
-
-    moveavtoleft()
-    sidebounce()
-   end
-
-   if av.xvel>=0 and rightcol(av,av.xvel,av.yvel,0) then
-    av.pauseanim="rsquish"
-    
-    collisionimpact(av.x+av.w,av.y+(av.h/2),
-     -0.75,1,true,avcolours)
-
-    moveavtoright()
-    sidebounce()
-   end
-  end
-	else --on ground
-	 if allleftcol(av,av.xvel,0,0) or allrightcol(av,av.xvel,0,0) then
-	  --should move av to wall but w/e
-	  av.xvel=0
 	 end
  end
 end
@@ -812,14 +816,12 @@ function distancetowall(box,checkx,checky,direction,colfunc,topcheck)
    --corner collision occured
    -- abort wall collision
    -- with ground collision
-   av.pauseanim="gsquish"
-   av.xpause=squishpause
-   av.ypause=squishpause
-   
-   moveavtoground()
-  
-   av.yvel=0
-   av.xvel=0
+   --get a bunch of particles and bounce sfx
+   -- and av juts along when this happens
+   groundcollisioncalculations()
+
+   --re-reverse wall collision vel flip
+   av.xvel*=-1
    return distancetowall
   end
   
