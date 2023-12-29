@@ -897,59 +897,59 @@ function initlevels()
  -- find the enterance
  lvls={
   --controls tutorial
-  {xmap=4,ymap=1,h=2},
+  {xmap=4,ymap=1,h=2,winmsg="level complete!"},
   
   --bunkers
   --bunker tutorial
-  {xmap=0,ymap=0},
+  {xmap=0,ymap=0,winmsg="win!"},
   --bunker tutorial 2
-  {xmap=1,ymap=0},
+  {xmap=1,ymap=0,winmsg="winner is you!"},
   --static swing power test
-  {xmap=3,ymap=2},
+  {xmap=3,ymap=2,winmsg="congratulation!"},
   --bounce off walls
-  {xmap=7,ymap=2},
+  {xmap=7,ymap=2,winmsg="justice proved!"},
 
   --belts intro
   --convayer belts
-  {xmap=3,ymap=3},
+  {xmap=3,ymap=3,winmsg="holywood handshake!"},
   --convayers and bunkers
-  {xmap=2,ymap=1,w=2},
+  {xmap=2,ymap=1,w=2,winmsg="wormy time!"},
   --belt maze
-  {xmap=6,ymap=1,w=2},
+  {xmap=6,ymap=1,w=2,winmsg="goodbye & good gardening!"},
 
   --hooks intro
   --moving hooks
-  {xmap=1,ymap=3},
+  {xmap=1,ymap=3,winmsg="cookie crumbled!"},
   --hook maze newer
-  {xmap=2,ymap=0},
+  {xmap=2,ymap=0,winmsg="sublime!"},
   --hook maze older
-  {xmap=0,ymap=3},
+  {xmap=0,ymap=3,winmsg="hard died!"},
   --mover hooks horizontal
-  {xmap=3,ymap=0},
+  {xmap=3,ymap=0,winmsg="father avenged!"},
   --diag mover hooks
-  {xmap=0,ymap=2},
+  {xmap=0,ymap=2,winmsg="a cooked goose!"},
   --tall moving hooks climb
-  {xmap=5,ymap=1,h=2},
+  {xmap=5,ymap=1,h=2,winmsg="princess ogred!"},
 
   --slows intro
   --slows tutorial
-  {xmap=6,ymap=0},
+  {xmap=6,ymap=0,winmsg="wise!"},
   --float zone 3x3
-  {xmap=7,ymap=0},
+  {xmap=7,ymap=0,winmsg="juicy!"},
   --zig-zag slows
-  {xmap=0,ymap=1},
+  {xmap=0,ymap=1,winmsg="full sick nasty!"},
   --float climb
-  {xmap=2,ymap=2,h=2},
+  {xmap=2,ymap=2,h=2,winmsg="wack sick dope!"},
 
   --player knows all mechanics
   --belts and death hooks
-  {xmap=4,ymap=3},
+  {xmap=4,ymap=3,winmsg="top dog!"},
   --wide slows with mover hooks
-  {xmap=4,ymap=0,w=2},
+  {xmap=4,ymap=0,w=2,winmsg="ein wurm fuer dich!"},
   --dive deep-belts and slows
-  {xmap=1,ymap=1,h=2},
+  {xmap=1,ymap=1,h=2,winmsg="big boy!"},
   --final gauntlet
-  {xmap=5,ymap=3,w=3}
+  {xmap=5,ymap=3,w=3,winmsg="you did it!"}
  }
  
  --change to set starting lvl
@@ -1126,8 +1126,7 @@ function makebackgrounds()
   --vars
   x=0,
   y=0,
-  xvel=0.05,
-  yvel=0.05,
+  diagvel=0.05,
  }
 end
 
@@ -1287,15 +1286,13 @@ function updateav()
    
    --if top of count,
    -- move av to current checkpoint
-   av.x=xcp+0.25 --pixel*2
-   av.y=ycp+0.25 --pixel*2
+   av.x,av.y=xcp+0.25,ycp+0.25 --pixel*2
    
    sfx(28)
 
-   initcollect(av.x+0.25,av.y+0.25,avcolours) --pixel*2
+   initcollect(av.x+0.25,av.y+0.25) --pixel*2
 
-   av.respawnstate="respawn"
-   av.respawncounter=0
+   av.respawnstate,av.respawncounter="respawn",0
   end
 
  elseif av.respawnstate=="respawn" then
@@ -1608,10 +1605,7 @@ function rotacc(fact)
 end
 
 function rotatevec(x,y,angle)
- local newx=x*cos(angle)-y*sin(angle)
- local newy=x*sin(angle)+y*cos(angle)
- 
- return newx,newy
+ return x*cos(angle)-y*sin(angle),x*sin(angle)+y*cos(angle)
 end
 
 function boostswing()
@@ -1624,8 +1618,7 @@ function boostswing()
   swing.force=swing.highf
  end
 
- av.pauseanim="boost"
- av.animpause=10
+ av.pauseanim,av.animpause="boost",10
  resetanimt(av.anim)
 end
 
@@ -1652,23 +1645,12 @@ function hookreleaseav(hook)
 end
 
 function updatebackgrounds()
- bg.x+=bg.xvel
- bg.y+=bg.yvel
+ bg.x+=bg.diagvel
+ bg.y+=bg.diagvel
  
  if bg.x>=16 then
   bg.x-=16
- end
-
- if bg.y>=16 then
   bg.y-=16
- end
- 
- if bg.x<=-16 then
-  bg.x+=16
- end
-
- if bg.y<=-16 then
-  bg.y+=16
  end
 end
 
@@ -2189,9 +2171,8 @@ end
 function drawlvlend()
  drawplaying()
 
- local c1,c2=0,7
+ local c1,c2,s=0,7,currlvl.winmsg
 
- s="level completed!"
  outline(s,
   (cam.x*128)+hw(s),(cam.y*128)+32,c1,c2)
  
@@ -2209,8 +2190,7 @@ function drawlvlend()
 end
 
 function inittransition(cols,resumefunc,nextstatefunc)
- currentupdate=updatetransition
- currentdraw=drawtransition
+ currentupdate,currentdraw=updatetransition,drawtransition
 
  transition=resettransition(cols,resumefunc,nextstatefunc)
 end
@@ -2573,7 +2553,7 @@ function initburst(x,y,cols)
 	end
 end
 
-function initcollect(x,y,cols)
+function initcollect(x,y)
  local e=createeffect(updatecollect)
  e.x,e.y=x*8,y*8
 
@@ -2584,7 +2564,7 @@ function initcollect(x,y,cols)
   local x=x+r*cos(i)
   local y=y+r*sin(i)
 
-  local col=cols[1+flr(rnd(#cols))]
+  local col=cols[1+flr(rnd(#avcolours))]
 
   local p=createparticle(
    x*8,y*8,
@@ -2621,8 +2601,7 @@ function collisionimpact(x,y,dx,dy,wall,cols)
 
  --could scale based on force
 
- av.xpause=squishpause
- av.ypause=squishpause
+ av.xpause,av.ypause=squishpause,squishpause
  
  initdustkick(x,y,
   dx,dy,
