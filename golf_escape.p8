@@ -370,10 +370,7 @@ function handleswinginput()
    resetswing()
     
    if av.slowstate=="in" then
-   initdustkick(av.x,av.y,
-    -0.5,-0.5,
-    1,1,
-    20,5,floatcolours,true,4)
+    initpoof(av.x,av.y,floatcolours,0.25)
 
     sfx(41)
     av.slowstate="escape"
@@ -1639,18 +1636,12 @@ function hookreleaseav(hook)
   sfx(9)
   --smoke puff
   -- 4*pixel
-  initdustkick(hook.x+0.5,hook.y+0.5,
-   -0.5,-0.5,
-   1,1,
-   20,5,hookcolours,true,4)
+  initpoof(hook.x,hook.y,hookcolours,0.5)
 
   hook.x,hook.y=hook.spawnx,hook.spawny
 
   --another puff at spawn
-  initdustkick(hook.x+0.5,hook.y+0.5,
-   -0.5,-0.5,
-   1,1,
-   20,5,hookcolours,true,4)
+  initpoof(hook.x,hook.y,hookcolours,0.5)
 
   hook.xvel,hook.yvel,hook.s=hook.spawnxvel,hook.spawnyvel,hook.spawns
  end
@@ -2507,6 +2498,13 @@ function drawparticles(front)
    end
   end
  end
+end
+
+function initpoof(x,y,cols,off)
+  initdustkick(x+off,y+off,
+   -0.5,-0.5,
+   1,1,
+   20,5,cols,true,4)
 end
 
 function initdustkick(x,y,dx,dy,rdx,rdy,no,minlength,cols,front,radius)
