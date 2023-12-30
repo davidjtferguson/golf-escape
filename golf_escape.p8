@@ -6,8 +6,7 @@ __lua__
 function _init()
 
  --constants
- pixel,gravity=0.125,0.009
- treadmillspeed=0.020
+ pixel,gravity,treadmillspeed=0.125,0.009,0.020
  
  --velocity multiplier
  -- when in slow zones
@@ -26,18 +25,16 @@ function _init()
  squishpause=4
  
  factoryx,factoryy=768,256
+
  --vars
 
- pausecontrols,pausecamera=false,false
- endingtransition=false
+ pausecontrols,pausecamera,endingtransition=false,false,false
 
  --checkpoint
  xcp,ycp,cpanim=0,0,makeanimt(23,10,3)
  
  --hack for top corner collision
- topcoloverwrite=false
- 
- lvlhasmovinghooks=false
+ topcoloverwrite,lvlhasmovinghooks=false,false
 
  resetav()
  
@@ -1015,12 +1012,9 @@ function resetav()
 end
 
 function resethurtbox(obj)
- local xoff=pixel
- local yoff=pixel
- 
  obj.hurtbox={
-  x=obj.x+xoff,
-  y=obj.y+yoff,
+  x=obj.x+pixel,
+  y=obj.y+pixel,
   w=pixel,
   h=pixel,
  }
@@ -1046,8 +1040,7 @@ function resetswing()
   currdecaypause=0,
  }
  
- swing.force=swing.lowf
- swing.currrotangle=swing.lowrotangle
+ swing.force,swing.currrotangle=swing.lowf,swing.lowrotangle
 end
 
 function createbumper(x,y)
@@ -1162,8 +1155,7 @@ function nextlevel()
  --delete previous level's game objects
  -- (this means no going back levels
  -- since the game object level data is deleted)
- bumpers={}
- hooks={}
+ bumpers,hooks={},{}
  
  currlvl=lvls[lvls.currlvlno]
  
@@ -1251,6 +1243,16 @@ function skiplvl()
  lvlsskipped+=1
  nextlevel()
  effects={}
+end
+
+function togglemusic()
+ if musicon then
+  music(-1)
+ else
+  music(8)
+ end
+
+ musicon=not musicon
 end
 
 -->8
@@ -1345,8 +1347,7 @@ function updatecamera()
  local cammovespeed=pixel/4
 
  if not cam.free then
-  cam.xfree=movetopoint(cam.xfree,cam.x)
-  cam.yfree=movetopoint(cam.yfree,cam.y)
+  cam.xfree,cam.yfree=movetopoint(cam.xfree,cam.x),movetopoint(cam.yfree,cam.y)
 	end
 
  if not pausecontrols then
@@ -1447,11 +1448,9 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 			local aimangle=atan2(swing.xvec,swing.yvec)
 
 			if angleinrange(aimangle,highrange) then
-				tiledestination=highbound
-				cam.prevtiledest=tiledestination
+				tiledestination,cam.prevtiledest=highbound,tiledestination
 			elseif angleinrange(aimangle,lowrange) then
-				tiledestination=lowbound
-				cam.prevtiledest=tiledestination
+				tiledestination,cam.prevtiledest=lowbound,tiledestination
 			end
 			
 			local cameradest=(avpos-tiledestination)/16
@@ -1557,8 +1556,7 @@ function updateaim()
 
     --simulate av collision
     if anycol(aim.hurtbox,aim.xvel,aim.yvel,4) then
-     wallhit=true
-     aim.hitdeath=true
+     wallhit,aim.hitdeath=true,true
     end
 
     if groundcol(aim,0,aim.yvel,0) or
@@ -1689,8 +1687,7 @@ function updatecorpses()
 
    if c.stage=="start" then
     if c.lifespan>=20 then
-     c.lifespan=0
-     c.stage="grow"
+     c.lifespan,c.stage=0,"grow"
     end
    elseif c.stage=="grow" then
     local p={
@@ -1703,10 +1700,8 @@ function updatecorpses()
     add(c.particles,p)
    
     if c.lifespan>=200 then
-     c.stage="decay"
-
      --body is dissolved
-     c.s=-1
+     c.stage,c.s="decay",-1
     end
    elseif c.stage=="decay" then
     del(c.particles,
@@ -1734,9 +1729,7 @@ end
 
 function avanimfind(t)
  --default idle
- t.basesprite=46
- t.sprites=2
- t.speed=19
+ t.basesprite,t.sprites,t.speed=46,2,19
 
  if btnp()>0 then
    idleframes=0
@@ -1752,16 +1745,13 @@ function avanimfind(t)
     --tried a snore but didn't like it
     --lsfx(35)
     
-    t.basesprite=7
-    t.speed=90
+    t.basesprite,t.speed=7,90
   end
  end
 
  --flying through air
  if av.colstate!="ground" then
-  t.basesprite=60
-  t.sprites=4
-  t.speed=7
+  t.basesprite,t.sprites,t.speed=60,4,7
   
   --slowstate
   -- air but slower
@@ -1772,8 +1762,7 @@ function avanimfind(t)
 
  --on hook
  if av.colstate=="hook" then
-  t.basesprite=46
-  t.sprites=1
+  t.basesprite,t.sprites=46,1
  end
 
  local flipval=-1
@@ -1788,9 +1777,7 @@ function avanimfind(t)
  if av.canswing and swing.force>swing.lowf then
   --bottom half of swing force
   if swing.force<((swing.highf-swing.lowf)/2)+swing.lowf then
-   t.basesprite=27
-   t.sprites=3
-   t.speed=5
+   t.basesprite,t.sprites,t.speed=27,3,5
    
    lsfx(2)
    
@@ -1801,9 +1788,7 @@ function avanimfind(t)
    end
   elseif swing.force<=swing.highf-((swing.highf-swing.lowf)/10) then
    --top half
-   t.basesprite=43
-   t.sprites=3
-   t.speed=4
+   t.basesprite,t.sprites,t.speed=43,3,4
    
    lsfx(3)
    
@@ -1814,9 +1799,7 @@ function avanimfind(t)
    end
   else
    --top 10%
-   t.basesprite=43
-   t.sprites=3
-   t.speed=2
+   t.basesprite,t.sprites,t.speed=43,3,2
    
    lsfx(4)
    
@@ -1830,29 +1813,19 @@ function avanimfind(t)
 
  --sqush anims
  if av.pauseanim=="gsquish" then
-  t.basesprite=41
-  t.sprites=1
-  av.yflip=true
+  t.basesprite,t.sprites,av.yflip=41,1,true
  elseif av.pauseanim=="lsquish" then
-  t.basesprite=42
-  t.sprites=1
+  t.basesprite,t.sprites=42,1
  elseif av.pauseanim=="rsquish" then
-  t.basesprite=42
-  t.sprites=1
-  av.xflip=true
+  t.basesprite,t.sprites,av.xflip=42,1,true
  elseif av.pauseanim=="tsquish" then
-  t.basesprite=41
-  t.sprites=1
+  t.basesprite,t.sprites=41,1
  elseif av.pauseanim=="boost" then
-  t.basesprite=30
-  t.sprites=2
-  t.speed=5
+  t.basesprite,t.sprites,t.speed=30,2,5
  end
  
  if av.dancing then
-	 t.basesprite=12
-	 t.sprites=4
-	 t.speed=15
+	 t.basesprite,t.sprites,t.speed=12,4,15
  end
 
  --don't show av if dead
@@ -2074,10 +2047,11 @@ function startgame()
 
  initlevels()
 
- currentupdate,currentdraw=updateplaying,drawplaying
+ currentupdate,currentdraw,musicon=updateplaying,drawplaying,true
 
  --replace skip intro
  menuitem(1,"skip level", skiplvl)
+ menuitem(2, "toggle music", togglemusic)
 
  initfade(currlvl.xmap*16,currlvl.ymap*16,0)
 end
@@ -2311,7 +2285,9 @@ function initending()
 
  music(0)
 
+ --remove skip level and music toggle
  menuitem(1)
+ menuitem(2)
 
  --factory external
  currlvl.xmap,currlvl.ymap=6,2
