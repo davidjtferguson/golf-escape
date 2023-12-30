@@ -1242,6 +1242,7 @@ end
 
 function skiplvl()
  lvlsskipped+=1
+ resetav()
  nextlevel()
  effects={}
 end
@@ -1310,8 +1311,7 @@ function updateav()
  if av.xpause<=0 and
     av.ypause<=0 and
     av.animpause<=0 then
-  av.pauseanim="none"
-  av.yflip=false
+  av.pauseanim,av.yflip="none",false
  end
 
  if av.xpause>0 then
@@ -1927,8 +1927,8 @@ function initstartscreen()
 
  resetav()
  
- av.x=(6*16)+1.5
- av.y=(2*16)+1
+ av.x=96+1.5 --6*16
+ av.y=32+1 --2*16
  
  currentupdate=updatestartscreen
  currentdraw=drawstartscreen
