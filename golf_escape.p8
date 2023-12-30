@@ -1449,9 +1449,11 @@ function camera1d(lcam,lvlpos,lvllength,avpos,avlength,highrange,lowrange)
 			local aimangle=atan2(swing.xvec,swing.yvec)
 
 			if angleinrange(aimangle,highrange) then
-				tiledestination,cam.prevtiledest=highbound,tiledestination
+				tiledestination=highbound
+    cam.prevtiledest=tiledestination
 			elseif angleinrange(aimangle,lowrange) then
-				tiledestination,cam.prevtiledest=lowbound,tiledestination
+				tiledestination=lowbound
+    cam.prevtiledest=tiledestination
 			end
 			
 			local cameradest=(avpos-tiledestination)/16
