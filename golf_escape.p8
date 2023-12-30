@@ -68,6 +68,7 @@ function _init()
  --music(7)
  --]]
 
+ menuitem(1,"skip intro", startgame)
  initstartscreen()
 
  aim={
@@ -2061,20 +2062,24 @@ function updateintro()
   end
  elseif introstate=="hitwindow" then
   if circlecollision(av,introwindow) then
-   --start game
-   sfx(17)
-   music(7)
-
-   initlevels()
-
-   currentupdate=updateplaying
-   currentdraw=drawplaying
-   
-   menuitem(1,"skip level", skiplvl)
-
-   initfade(currlvl.xmap*16,currlvl.ymap*16,0)
+   startgame()
   end
  end
+end
+
+function startgame()
+ --start game
+ sfx(17)
+ music(7)
+
+ initlevels()
+
+ currentupdate,currentdraw=updateplaying,drawplaying
+
+ --replace skip intro
+ menuitem(1,"skip level", skiplvl)
+
+ initfade(currlvl.xmap*16,currlvl.ymap*16,0)
 end
 
 function drawintro()
@@ -2254,8 +2259,7 @@ end
 
 function backtoplaying()
  updateaim()
- currentupdate=updateplaying
- currentdraw=drawplaying
+ currentupdate,currentdraw=updateplaying,drawplaying
  pausecontrols=false
 end
 
@@ -2310,10 +2314,8 @@ function initending()
  menuitem(1)
 
  --factory external
- currlvl.xmap=6
- currlvl.ymap=2
- currlvl.w=1
- currlvl.h=1
+ currlvl.xmap,currlvl.ymap=6,2
+ currlvl.w,currlvl.h=1,1
  currlvl.haskey=false
  
  --push open door
@@ -2803,7 +2805,7 @@ d000000dd000000dd000000dd000000dd000000dd000000dd000000dd000000dd000000d00000000
 282888288858882888288822282888220c11111111111111c11111111111111111111c1c111111c001111110333333430043494bbb4944bbbbbbbb0000bbbb00
 0222222222222222222222200222222000ccccccccccccccc111111111111111111111cccccccc00000000003b33333300000000000000000000000000000000
 9615961515d6d6d6d5d6d61515961596d5d4d7e6000005e5000000f6006686c51515151515d51515151515151515151515151515151515151515151515151515
-a40094000000c7d7d7d7d7d4d7e4140525000300071717d6d594e514030003140000000000000000a60000000000000096961515151515151515151515151596
+a40094000000c7d7d7d7d7d4d7e4140525000300441717d6d594e514030003140000000000000000a60000000000000096961515151515151515151515151596
 1596152600000000f600000006159615d5e60000000005e500000000006787c52566768600f6000000000000000000051596d5e6000000000000000000000615
 d5d4d5e400000000000000f600c6d5962500000000000003c6d5e5140000001400000000000000a596b5a6000000000015152600000000000000000000000615
 96152600000003009000030000061596e50000858585152566868484846787c52547579700667686000000000090000596d5e600000000000000000000000005
